@@ -21,10 +21,10 @@ Spring Boot 3.5.8 application written in Kotlin, using Gradle (Kotlin DSL) as th
 ./gradlew test
 
 # Run a single test class
-./gradlew test --tests "dev.ehyeon.dageudaktest.DageudakTestApplicationTests"
+./gradlew test --tests "dev.maldallija.maldallijabe.MaldallijaBeApplicationTests"
 
 # Run a single test method
-./gradlew test --tests "dev.ehyeon.dageudaktest.DageudakTestApplicationTests.contextLoads"
+./gradlew test --tests "dev.maldallija.maldallijabe.MaldallijaBeApplicationTests.contextLoads"
 
 # Clean build
 ./gradlew clean build
@@ -40,8 +40,8 @@ Spring Boot 3.5.8 application written in Kotlin, using Gradle (Kotlin DSL) as th
 
 ## Project Structure
 
-- `src/main/kotlin/dev/ehyeon/dageudaktest/` - Main application code
-- `src/test/kotlin/dev/ehyeon/dageudaktest/` - Test code
+- `src/main/kotlin/dev/maldallija/maldallijabe/` - Main application code
+- `src/test/kotlin/dev/maldallija/maldallijabe/` - Test code
 - `src/main/resources/` - Configuration files and static resources
 
 ## JPA Configuration
@@ -166,7 +166,7 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
 
 ### Package Structure
 ```
-dev.ehyeon.dageudaktest
+dev.maldallija.maldallijabe
 ├── user
 │   ├── adapter
 │   │   ├── in/web             # REST 컨트롤러
@@ -329,3 +329,9 @@ dev.ehyeon.dageudaktest
 - **Rationale**: Reduce complexity for toy project while maintaining real service potential
 - **Post-MVP path**: Add 3 permission tables back when needed (5-10 weeks saved in initial development)
 - **Updated documents**: database.md (ERD, tables, indexes), CLAUDE.md (domain model, implementation status), MEMO2.md (role definitions, phase plan)
+
+### 2025-12-08: Package name correction
+- **Package name updated**: Changed from `dev.ehyeon.dageudaktest` to `dev.maldallija.maldallijabe` throughout CLAUDE.md
+- **Test class name updated**: `DageudakTestApplicationTests` → `MaldallijaBeApplicationTests`
+- **Project structure paths corrected**: Updated all file path references to match actual codebase structure
+- **Rationale**: CLAUDE.md contained outdated package references that would cause build commands to fail

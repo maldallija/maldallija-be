@@ -3,6 +3,10 @@ plugins {
     kotlin("plugin.spring") version "1.9.25"
     id("org.springframework.boot") version "3.5.8"
     id("io.spring.dependency-management") version "1.1.7"
+    // ktlint
+    // - https://plugins.gradle.org/plugin/org.jlleitschuh.gradle.ktlint
+    // - https://github.com/JLLeitschuh/ktlint-gradle/releases
+    id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
 }
 
 group = "dev.maldallija"

@@ -1,3 +1,15 @@
 spring:
   application:
     name: maldallija-be
+
+management:
+  endpoints:
+    web:
+      base-path: /api
+      path-mapping:
+        health: health-check
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

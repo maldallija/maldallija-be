@@ -1,0 +1,14 @@
+spring:
+  config:
+    activate:
+      on-profile: production
+
+management:
+  endpoint:
+    health:
+      show-details: never
+
+discord:
+  webhook:
+    exception:
+      url: ${DISCORD_WEBHOOK_EXCEPTION_URL}

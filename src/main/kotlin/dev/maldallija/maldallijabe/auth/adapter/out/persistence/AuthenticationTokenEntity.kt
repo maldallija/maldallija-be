@@ -17,14 +17,14 @@ class AuthenticationTokenEntity(
     @Column(nullable = false)
     val userId: Long,
     @Column(length = 64)
-    var ipAddress: String? = null,
+    var ipAddress: String?,
     @Lob
-    var userAgent: String? = null,
+    var userAgent: String?,
     @Column(nullable = false, updatable = false)
     val createdAt: Instant,
     @Column(nullable = false)
     var expiresAt: Instant,
-    var revokedAt: Instant? = null,
+    var revokedAt: Instant?,
     @Column(length = 64)
-    var revokedReason: String? = null,
+    var revokedReason: String?,
 )

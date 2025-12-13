@@ -1,5 +1,6 @@
-package dev.maldallija.maldallijabe.user.adapter.out.persistence
+package dev.maldallija.maldallijabe.user.adapter.out.persistence.mapper
 
+import dev.maldallija.maldallijabe.user.adapter.out.persistence.entity.UserEntity
 import dev.maldallija.maldallijabe.user.domain.User
 import org.springframework.stereotype.Component
 

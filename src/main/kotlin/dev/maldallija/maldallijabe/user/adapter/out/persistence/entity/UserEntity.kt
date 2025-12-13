@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.user.adapter.out.persistence
+package dev.maldallija.maldallijabe.user.adapter.out.persistence.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -19,7 +19,7 @@ class UserEntity(
     val uuid: UUID,
     @Column(nullable = false, unique = true, length = 255)
     var username: String,
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 60)
     var password: String,
     @Column(nullable = false, length = 32)
     var nickname: String,

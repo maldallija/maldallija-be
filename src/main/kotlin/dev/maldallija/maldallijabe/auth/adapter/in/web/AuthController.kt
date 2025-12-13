@@ -1,6 +1,8 @@
 package dev.maldallija.maldallijabe.auth.adapter.`in`.web
 
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignInRequest
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignUpRequest
+import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignUpUseCase
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -20,8 +22,34 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/auth")
 class AuthController(
+    private val signInUseCase: SignInUseCase,
     private val signUpUseCase: SignUpUseCase,
 ) {
+    @Operation(summary = "로그인")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "잘못된 username 또는 password",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PostMapping("/sign-in")
+    fun signIn(
+        @RequestBody request: SignInRequest,
+    ): ResponseEntity<Unit> {
+        signInUseCase.signIn(
+            username = request.username,
+            password = request.password,
+        )
+
+        return ResponseEntity.ok().build()
+    }
+
     @Operation(summary = "회원가입")
     @ApiResponses(
         value = [

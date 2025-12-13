@@ -1,5 +1,6 @@
 package dev.maldallija.maldallijabe.common.adapter.`in`.web
 
+import dev.maldallija.maldallijabe.auth.domain.exception.AuthException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpStatus
@@ -18,6 +19,18 @@ class GlobalExceptionHandler {
             )
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(AuthException::class)
+    fun handleAuthException(e: AuthException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Authentication error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.UNAUTHORIZED)
             .body(errorResponse)
     }
 

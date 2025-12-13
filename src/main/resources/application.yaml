@@ -1,6 +1,8 @@
 spring:
   application:
     name: maldallija-be
+  profiles:
+    active: local
 
 management:
   endpoints:

@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: maldallija-local-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: maldallija
+    ports:
+      - "5432:5432"

@@ -33,6 +33,9 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // swagger
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
 }
 
 kotlin {

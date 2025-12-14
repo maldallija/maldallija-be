@@ -6,7 +6,7 @@ object AuthenticationAccessSessionMapper {
     fun toDomain(entity: AuthenticationAccessSessionEntity): AuthenticationAccessSession =
         AuthenticationAccessSession(
             id = entity.id,
-            accessToken = entity.accessToken,
+            authenticationAccessSession = entity.authenticationAccessSession,
             userId = entity.userId,
             createdAt = entity.createdAt,
             expiresAt = entity.expiresAt,
@@ -17,7 +17,7 @@ object AuthenticationAccessSessionMapper {
     fun toEntity(domain: AuthenticationAccessSession): AuthenticationAccessSessionEntity =
         AuthenticationAccessSessionEntity(
             id = domain.id,
-            accessToken = domain.accessToken,
+            authenticationAccessSession = domain.authenticationAccessSession,
             userId = domain.userId,
             createdAt = domain.createdAt,
             expiresAt = domain.expiresAt,

@@ -16,9 +16,9 @@ class AuthenticationAccessSessionRepositoryAdapter(
         return AuthenticationAccessSessionMapper.toDomain(savedEntity)
     }
 
-    override fun findByAccessToken(accessToken: UUID): AuthenticationAccessSession? =
+    override fun findByAuthenticationAccessSession(authenticationAccessSession: UUID): AuthenticationAccessSession? =
         jpaRepository
-            .findByAccessToken(accessToken)
+            .findByAuthenticationAccessSession(authenticationAccessSession)
             ?.let { AuthenticationAccessSessionMapper.toDomain(it) }
 
     override fun revokeAllByUserId(

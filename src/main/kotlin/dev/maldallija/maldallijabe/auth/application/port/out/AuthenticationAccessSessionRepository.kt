@@ -6,7 +6,7 @@ import java.util.UUID
 interface AuthenticationAccessSessionRepository {
     fun save(accessSession: AuthenticationAccessSession): AuthenticationAccessSession
 
-    fun findByAccessToken(accessToken: UUID): AuthenticationAccessSession?
+    fun findByAuthenticationAccessSession(authenticationAccessSession: UUID): AuthenticationAccessSession?
 
     fun revokeAllByUserId(
         userId: Long,

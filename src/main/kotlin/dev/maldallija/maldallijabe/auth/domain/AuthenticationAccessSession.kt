@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class AuthenticationAccessSession(
     val id: Long,
-    val accessToken: UUID,
+    val authenticationAccessSession: UUID,
     val userId: Long,
     val createdAt: Instant,
     val expiresAt: Instant,

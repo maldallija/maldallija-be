@@ -23,18 +23,22 @@ class AuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val accessToken = request.cookies?.find { it.name == "accessToken" }?.value
+        val authenticationAccessSession = request.cookies?.find { it.name == "authenticationAccessSession" }?.value
 
-        if (accessToken == null) {
-            sendUnauthorized(response, "Missing access token")
+        if (authenticationAccessSession == null) {
+            sendUnauthorized(response, "Missing authentication access session")
             return
         }
 
         val session =
             try {
-                authenticationAccessSessionRepository.findByAccessToken(UUID.fromString(accessToken))
+                authenticationAccessSessionRepository.findByAuthenticationAccessSession(
+                    UUID.fromString(
+                        authenticationAccessSession,
+                    ),
+                )
             } catch (e: IllegalArgumentException) {
-                sendUnauthorized(response, "Invalid access token")
+                sendUnauthorized(response, "Invalid authentication access session")
                 return
             }
 

@@ -8,7 +8,7 @@ import java.time.Instant
 import java.util.UUID
 
 interface AuthenticationAccessSessionJpaRepository : JpaRepository<AuthenticationAccessSessionEntity, Long> {
-    fun findByAccessToken(accessToken: UUID): AuthenticationAccessSessionEntity?
+    fun findByAuthenticationAccessSession(authenticationAccessSession: UUID): AuthenticationAccessSessionEntity?
 
     @Modifying
     @Query(

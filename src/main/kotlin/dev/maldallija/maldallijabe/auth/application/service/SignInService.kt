@@ -40,7 +40,7 @@ class SignInService(
         val authenticationAccessSession =
             AuthenticationAccessSession(
                 id = 0,
-                accessToken = UUID.randomUUID(),
+                authenticationAccessSession = UUID.randomUUID(),
                 userId = user.id,
                 createdAt = now,
                 expiresAt = now.plusSeconds(AuthenticationAccessSession.EXPIRY_DAYS * 24 * 60 * 60),

@@ -45,7 +45,7 @@ class AuthController(
     fun signIn(
         @RequestBody request: SignInRequest,
     ): ResponseEntity<Unit> {
-        val accessSession =
+        val authenticationAccessSession =
             signInUseCase.signIn(
                 username = request.username,
                 password = request.password,
@@ -53,7 +53,7 @@ class AuthController(
 
         val cookie =
             ResponseCookie
-                .from("accessToken", accessSession.accessToken.toString())
+                .from("authenticationAccessSession", authenticationAccessSession.authenticationAccessSession.toString())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")

@@ -11,12 +11,15 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.Duration
 
 @Tag(name = "Auth", description = "인증 API")
 @RestController
@@ -42,12 +45,26 @@ class AuthController(
     fun signIn(
         @RequestBody request: SignInRequest,
     ): ResponseEntity<Unit> {
-        signInUseCase.signIn(
-            username = request.username,
-            password = request.password,
-        )
+        val accessSession =
+            signInUseCase.signIn(
+                username = request.username,
+                password = request.password,
+            )
 
-        return ResponseEntity.ok().build()
+        val cookie =
+            ResponseCookie
+                .from("accessToken", accessSession.accessToken.toString())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.ofDays(7))
+                .sameSite("Strict")
+                .build()
+
+        return ResponseEntity
+            .ok()
+            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .build()
     }
 
     @Operation(summary = "회원가입")

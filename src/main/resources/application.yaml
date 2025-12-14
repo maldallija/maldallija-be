@@ -4,6 +4,10 @@ spring:
   profiles:
     active: local
 
+auth:
+  access-session:
+    expiry-days: 7
+
 management:
   endpoints:
     web:

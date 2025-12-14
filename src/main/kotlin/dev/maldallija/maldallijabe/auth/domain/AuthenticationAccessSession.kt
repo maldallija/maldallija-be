@@ -23,9 +23,4 @@ data class AuthenticationAccessSession(
             revokedAt = Instant.now(),
             revokedReason = reason,
         )
-
-    // TODO-noah: 환경으로 분리
-    companion object {
-        const val EXPIRY_DAYS = 7L
-    }
 }

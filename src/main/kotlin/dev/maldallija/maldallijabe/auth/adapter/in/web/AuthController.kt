@@ -3,6 +3,7 @@ package dev.maldallija.maldallijabe.auth.adapter.`in`.web
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignInRequest
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignUpRequest
+import dev.maldallija.maldallijabe.auth.application.port.`in`.RefreshSessionUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignOutUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignUpUseCase
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.CookieValue
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -32,6 +34,7 @@ import java.util.UUID
 class AuthController(
     private val signInUseCase: SignInUseCase,
     private val signOutUseCase: SignOutUseCase,
+    private val refreshSessionUseCase: RefreshSessionUseCase,
     private val signUpUseCase: SignUpUseCase,
 ) {
     @Operation(summary = "로그인")
@@ -106,6 +109,51 @@ class AuthController(
             .ok()
             .header(HttpHeaders.SET_COOKIE, deletedAccessCookie.toString())
             .header(HttpHeaders.SET_COOKIE, deletedRefreshCookie.toString())
+            .build()
+    }
+
+    @Operation(summary = "세션 갱신")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "유효하지 않거나 만료된 refresh session",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PostMapping("/sessions/refresh")
+    fun refresh(
+        @CookieValue(name = "authenticationRefreshSession") refreshSessionId: String,
+    ): ResponseEntity<Unit> {
+        val result =
+            refreshSessionUseCase.refreshSession(
+                refreshSessionId = UUID.fromString(refreshSessionId),
+            )
+
+        val authenticationRefreshCookie =
+            createAuthenticationSessionCookie(
+                name = AuthenticationSessionCookieName.REFRESH_SESSION,
+                value = result.refreshSessionId,
+                createdAt = result.refreshSessionCreatedAt,
+                expiresAt = result.refreshSessionExpiresAt,
+            )
+
+        val authenticationAccessCookie =
+            createAuthenticationSessionCookie(
+                name = AuthenticationSessionCookieName.ACCESS_SESSION,
+                value = result.accessSessionId,
+                createdAt = result.accessSessionCreatedAt,
+                expiresAt = result.accessSessionExpiresAt,
+            )
+
+        return ResponseEntity
+            .ok()
+            .header(HttpHeaders.SET_COOKIE, authenticationRefreshCookie.toString())
+            .header(HttpHeaders.SET_COOKIE, authenticationAccessCookie.toString())
             .build()
     }
 

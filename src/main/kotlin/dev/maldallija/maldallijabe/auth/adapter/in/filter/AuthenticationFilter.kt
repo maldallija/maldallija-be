@@ -55,6 +55,7 @@ class AuthenticationFilter(
         val path = request.requestURI
         return path.startsWith("/api/v1/auth/sign-in") ||
             path.startsWith("/api/v1/auth/sign-up") ||
+            path.startsWith("/api/v1/auth/refresh") ||
             path.startsWith("/swagger-ui") ||
             path.startsWith("/v3/api-docs")
     }

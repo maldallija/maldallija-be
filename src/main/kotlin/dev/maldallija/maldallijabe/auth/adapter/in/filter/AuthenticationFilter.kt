@@ -1,6 +1,7 @@
 package dev.maldallija.maldallijabe.auth.adapter.`in`.filter
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import jakarta.servlet.FilterChain
@@ -23,7 +24,8 @@ class AuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val authenticationAccessSession = request.cookies?.find { it.name == "authenticationAccessSession" }?.value
+        val authenticationAccessSession =
+            request.cookies?.find { it.name == AuthenticationSessionCookieName.ACCESS_SESSION }?.value
 
         if (authenticationAccessSession == null) {
             sendUnauthorized(response, "Missing authentication access session")

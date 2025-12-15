@@ -1,5 +1,6 @@
 package dev.maldallija.maldallijabe.auth.adapter.`in`.web
 
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignInRequest
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignUpRequest
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInUseCase
@@ -58,7 +59,7 @@ class AuthController(
 
         val authenticationAccessCookie =
             createAuthenticationSessionCookie(
-                name = "authenticationAccessSession",
+                name = AuthenticationSessionCookieName.ACCESS_SESSION,
                 value = signInResult.accessSessionId,
                 createdAt = signInResult.accessSessionCreatedAt,
                 expiresAt = signInResult.accessSessionExpiresAt,
@@ -66,7 +67,7 @@ class AuthController(
 
         val authenticationRefreshCookie =
             createAuthenticationSessionCookie(
-                name = "authenticationRefreshSession",
+                name = AuthenticationSessionCookieName.REFRESH_SESSION,
                 value = signInResult.refreshSessionId,
                 createdAt = signInResult.refreshSessionCreatedAt,
                 expiresAt = signInResult.refreshSessionExpiresAt,
@@ -98,8 +99,8 @@ class AuthController(
     ): ResponseEntity<Unit> {
         signOutUseCase.signOut(userId)
 
-        val deletedRefreshCookie = deleteAuthenticationSessionCookie("authenticationRefreshSession")
-        val deletedAccessCookie = deleteAuthenticationSessionCookie("authenticationAccessSession")
+        val deletedRefreshCookie = deleteAuthenticationSessionCookie(AuthenticationSessionCookieName.REFRESH_SESSION)
+        val deletedAccessCookie = deleteAuthenticationSessionCookie(AuthenticationSessionCookieName.ACCESS_SESSION)
 
         return ResponseEntity
             .ok()

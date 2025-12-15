@@ -3,6 +3,8 @@ spring:
     name: maldallija-be
   profiles:
     active: local
+  jpa:
+    open-in-view: false
 
 auth:
   access-session:

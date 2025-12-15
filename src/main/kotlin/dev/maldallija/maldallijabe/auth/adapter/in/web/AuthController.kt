@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.time.Duration
+import java.time.Instant
+import java.util.UUID
 
 @Tag(name = "Auth", description = "인증 API")
 @RestController
@@ -52,24 +54,20 @@ class AuthController(
             )
 
         val authenticationAccessCookie =
-            ResponseCookie
-                .from("authenticationAccessSession", result.accessSession.authenticationAccessSession.toString())
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(Duration.between(result.accessSession.createdAt, result.accessSession.expiresAt))
-                .sameSite("Strict")
-                .build()
+            createAuthenticationSessionCookie(
+                name = "authenticationAccessSession",
+                value = result.accessSession.authenticationAccessSession,
+                createdAt = result.accessSession.createdAt,
+                expiresAt = result.accessSession.expiresAt,
+            )
 
         val authenticationRefreshCookie =
-            ResponseCookie
-                .from("authenticationRefreshSession", result.refreshSession.authenticationRefreshSession.toString())
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .maxAge(Duration.between(result.refreshSession.createdAt, result.refreshSession.expiresAt))
-                .sameSite("Strict")
-                .build()
+            createAuthenticationSessionCookie(
+                name = "authenticationRefreshSession",
+                value = result.refreshSession.authenticationRefreshSession,
+                createdAt = result.refreshSession.createdAt,
+                expiresAt = result.refreshSession.expiresAt,
+            )
 
         return ResponseEntity
             .ok()
@@ -103,4 +101,19 @@ class AuthController(
 
         return ResponseEntity.status(HttpStatus.CREATED).build()
     }
+
+    private fun createAuthenticationSessionCookie(
+        name: String,
+        value: UUID,
+        createdAt: Instant,
+        expiresAt: Instant,
+    ): ResponseCookie =
+        ResponseCookie
+            .from(name, value.toString())
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .maxAge(Duration.between(createdAt, expiresAt))
+            .sameSite("Strict")
+            .build()
 }

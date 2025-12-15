@@ -47,7 +47,7 @@ class AuthController(
     fun signIn(
         @RequestBody request: SignInRequest,
     ): ResponseEntity<Unit> {
-        val result =
+        val signInResult =
             signInUseCase.signIn(
                 username = request.username,
                 password = request.password,
@@ -56,17 +56,17 @@ class AuthController(
         val authenticationAccessCookie =
             createAuthenticationSessionCookie(
                 name = "authenticationAccessSession",
-                value = result.accessSession.authenticationAccessSession,
-                createdAt = result.accessSession.createdAt,
-                expiresAt = result.accessSession.expiresAt,
+                value = signInResult.accessSessionId,
+                createdAt = signInResult.accessSessionCreatedAt,
+                expiresAt = signInResult.accessSessionExpiresAt,
             )
 
         val authenticationRefreshCookie =
             createAuthenticationSessionCookie(
                 name = "authenticationRefreshSession",
-                value = result.refreshSession.authenticationRefreshSession,
-                createdAt = result.refreshSession.createdAt,
-                expiresAt = result.refreshSession.expiresAt,
+                value = signInResult.refreshSessionId,
+                createdAt = signInResult.refreshSessionCreatedAt,
+                expiresAt = signInResult.refreshSessionExpiresAt,
             )
 
         return ResponseEntity

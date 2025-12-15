@@ -1,12 +1,12 @@
 package dev.maldallija.maldallijabe.auth.application.service
 
+import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInResult
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInUseCase
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationRefreshSessionRepository
 import dev.maldallija.maldallijabe.auth.config.AuthProperties
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationAccessSession
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationRefreshSession
-import dev.maldallija.maldallijabe.auth.domain.SignInResult
 import dev.maldallija.maldallijabe.auth.domain.exception.InvalidCredentialsException
 import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -40,21 +40,10 @@ class SignInService(
             throw InvalidCredentialsException()
         }
 
-        authenticationAccessSessionRepository.revokeAllByUserId(user.id, "NEW_SIGN_IN")
         authenticationRefreshSessionRepository.revokeAllByUserId(user.id, "NEW_SIGN_IN")
+        authenticationAccessSessionRepository.revokeAllByUserId(user.id, "NEW_SIGN_IN")
 
         val now = Instant.now()
-        val authenticationAccessSession =
-            AuthenticationAccessSession(
-                id = 0,
-                authenticationAccessSession = UUID.randomUUID(),
-                userId = user.id,
-                createdAt = now,
-                expiresAt = now.plusSeconds(authProperties.accessSession.expiryHours * 60 * 60),
-                revokedAt = null,
-                revokedReason = null,
-            )
-
         val authenticationRefreshSession =
             AuthenticationRefreshSession(
                 id = 0,
@@ -66,12 +55,27 @@ class SignInService(
                 revokedReason = null,
             )
 
-        val savedAccessSession = authenticationAccessSessionRepository.save(authenticationAccessSession)
+        val authenticationAccessSession =
+            AuthenticationAccessSession(
+                id = 0,
+                authenticationAccessSession = UUID.randomUUID(),
+                userId = user.id,
+                createdAt = now,
+                expiresAt = now.plusSeconds(authProperties.accessSession.expiryHours * 60 * 60),
+                revokedAt = null,
+                revokedReason = null,
+            )
+
         val savedRefreshSession = authenticationRefreshSessionRepository.save(authenticationRefreshSession)
+        val savedAccessSession = authenticationAccessSessionRepository.save(authenticationAccessSession)
 
         return SignInResult(
-            accessSession = savedAccessSession,
-            refreshSession = savedRefreshSession,
+            refreshSessionId = savedRefreshSession.authenticationRefreshSession,
+            refreshSessionCreatedAt = savedRefreshSession.createdAt,
+            refreshSessionExpiresAt = savedRefreshSession.expiresAt,
+            accessSessionId = savedAccessSession.authenticationAccessSession,
+            accessSessionCreatedAt = savedAccessSession.createdAt,
+            accessSessionExpiresAt = savedAccessSession.expiresAt,
         )
     }
 }

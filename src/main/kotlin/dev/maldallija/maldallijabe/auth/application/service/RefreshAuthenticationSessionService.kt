@@ -1,6 +1,6 @@
 package dev.maldallija.maldallijabe.auth.application.service
 
-import dev.maldallija.maldallijabe.auth.application.port.`in`.RefreshSessionUseCase
+import dev.maldallija.maldallijabe.auth.application.port.`in`.RefreshAuthenticationSessionUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInResult
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationRefreshSessionRepository
@@ -15,27 +15,27 @@ import java.util.UUID
 
 @Service
 @Transactional
-class RefreshSessionService(
+class RefreshAuthenticationSessionService(
     private val authProperties: AuthProperties,
     private val authenticationAccessSessionRepository: AuthenticationAccessSessionRepository,
     private val authenticationRefreshSessionRepository: AuthenticationRefreshSessionRepository,
-) : RefreshSessionUseCase {
-    override fun refreshSession(refreshSessionId: UUID): SignInResult {
-        val refreshSession =
-            authenticationRefreshSessionRepository.findByAuthenticationRefreshSession(refreshSessionId)
+) : RefreshAuthenticationSessionUseCase {
+    override fun refreshAuthenticationSession(authenticationRefreshSessionId: UUID): SignInResult {
+        val authenticationRefreshSession =
+            authenticationRefreshSessionRepository.findByAuthenticationRefreshSession(authenticationRefreshSessionId)
                 ?: throw InvalidSessionException()
 
-        if (!refreshSession.isValid()) {
+        if (!authenticationRefreshSession.isValid()) {
             throw InvalidSessionException()
         }
 
-        val userId = refreshSession.userId
+        val userId = authenticationRefreshSession.userId
 
         authenticationRefreshSessionRepository.revokeAllByUserId(userId, "SESSION_REFRESH")
         authenticationAccessSessionRepository.revokeAllByUserId(userId, "SESSION_REFRESH")
 
         val now = Instant.now()
-        val authenticationRefreshSession =
+        val newAuthenticationRefreshSession =
             AuthenticationRefreshSession(
                 id = 0,
                 authenticationRefreshSession = UUID.randomUUID(),
@@ -46,7 +46,7 @@ class RefreshSessionService(
                 revokedReason = null,
             )
 
-        val authenticationAccessSession =
+        val newAuthenticationAccessSession =
             AuthenticationAccessSession(
                 id = 0,
                 authenticationAccessSession = UUID.randomUUID(),
@@ -57,16 +57,18 @@ class RefreshSessionService(
                 revokedReason = null,
             )
 
-        val savedRefreshSession = authenticationRefreshSessionRepository.save(authenticationRefreshSession)
-        val savedAccessSession = authenticationAccessSessionRepository.save(authenticationAccessSession)
+        val savedAuthenticationRefreshSession =
+            authenticationRefreshSessionRepository.save(newAuthenticationRefreshSession)
+        val savedAuthenticationAccessSession =
+            authenticationAccessSessionRepository.save(newAuthenticationAccessSession)
 
         return SignInResult(
-            refreshSessionId = savedRefreshSession.authenticationRefreshSession,
-            refreshSessionCreatedAt = savedRefreshSession.createdAt,
-            refreshSessionExpiresAt = savedRefreshSession.expiresAt,
-            accessSessionId = savedAccessSession.authenticationAccessSession,
-            accessSessionCreatedAt = savedAccessSession.createdAt,
-            accessSessionExpiresAt = savedAccessSession.expiresAt,
+            refreshSessionId = savedAuthenticationRefreshSession.authenticationRefreshSession,
+            refreshSessionCreatedAt = savedAuthenticationRefreshSession.createdAt,
+            refreshSessionExpiresAt = savedAuthenticationRefreshSession.expiresAt,
+            accessSessionId = savedAuthenticationAccessSession.authenticationAccessSession,
+            accessSessionCreatedAt = savedAuthenticationAccessSession.createdAt,
+            accessSessionExpiresAt = savedAuthenticationAccessSession.expiresAt,
         )
     }
 }

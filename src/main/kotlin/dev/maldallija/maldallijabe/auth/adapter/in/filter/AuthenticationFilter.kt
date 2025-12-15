@@ -2,7 +2,7 @@ package dev.maldallija.maldallijabe.auth.adapter.`in`.filter
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
-import dev.maldallija.maldallijabe.auth.application.port.`in`.ValidateSessionUseCase
+import dev.maldallija.maldallijabe.auth.application.port.`in`.ValidateAuthenticationSessionUseCase
 import dev.maldallija.maldallijabe.auth.domain.exception.InvalidSessionException
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import jakarta.servlet.FilterChain
@@ -17,7 +17,7 @@ import java.util.UUID
 
 @Component
 class AuthenticationFilter(
-    private val validateSessionUseCase: ValidateSessionUseCase,
+    private val validateAuthenticationSessionUseCase: ValidateAuthenticationSessionUseCase,
     private val objectMapper: ObjectMapper,
 ) : OncePerRequestFilter() {
     override fun doFilterInternal(
@@ -25,18 +25,18 @@ class AuthenticationFilter(
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        val authenticationAccessSession =
+        val authenticationAccessSessionCookie =
             request.cookies?.find { it.name == AuthenticationSessionCookieName.ACCESS_SESSION }?.value
 
-        if (authenticationAccessSession == null) {
+        if (authenticationAccessSessionCookie == null) {
             sendUnauthorized(response, "Missing authentication access session")
             return
         }
 
         val userId =
             try {
-                val sessionId = UUID.fromString(authenticationAccessSession)
-                validateSessionUseCase.validateSession(sessionId)
+                val authenticationAccessSessionId = UUID.fromString(authenticationAccessSessionCookie)
+                validateAuthenticationSessionUseCase.validateAuthenticationSession(authenticationAccessSessionId)
             } catch (e: IllegalArgumentException) {
                 sendUnauthorized(response, "Invalid authentication access session")
                 return
@@ -55,7 +55,7 @@ class AuthenticationFilter(
         val path = request.requestURI
         return path.startsWith("/api/v1/auth/sign-in") ||
             path.startsWith("/api/v1/auth/sign-up") ||
-            path.startsWith("/api/v1/auth/refresh") ||
+            path.startsWith("/api/v1/auth/sessions/refresh") ||
             path.startsWith("/swagger-ui") ||
             path.startsWith("/v3/api-docs")
     }

@@ -1,6 +1,6 @@
 package dev.maldallija.maldallijabe.auth.application.service
 
-import dev.maldallija.maldallijabe.auth.application.port.`in`.ValidateSessionUseCase
+import dev.maldallija.maldallijabe.auth.application.port.`in`.ValidateAuthenticationSessionUseCase
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.auth.domain.exception.InvalidSessionException
 import org.springframework.stereotype.Service
@@ -9,18 +9,18 @@ import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
-class ValidateSessionService(
+class ValidateAuthenticationSessionService(
     private val authenticationAccessSessionRepository: AuthenticationAccessSessionRepository,
-) : ValidateSessionUseCase {
-    override fun validateSession(sessionId: UUID): Long {
-        val session =
-            authenticationAccessSessionRepository.findByAuthenticationAccessSession(sessionId)
+) : ValidateAuthenticationSessionUseCase {
+    override fun validateAuthenticationSession(authenticationAccessSessionId: UUID): Long {
+        val authenticationAccessSession =
+            authenticationAccessSessionRepository.findByAuthenticationAccessSession(authenticationAccessSessionId)
                 ?: throw InvalidSessionException()
 
-        if (!session.isValid()) {
+        if (!authenticationAccessSession.isValid()) {
             throw InvalidSessionException()
         }
 
-        return session.userId
+        return authenticationAccessSession.userId
     }
 }

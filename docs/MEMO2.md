@@ -48,9 +48,15 @@
 
 # 개발 순서
 
-## Phase 1: 인증/인가
-1. **User** - 회원가입 (`is_system_admin` 플래그 포함)
-2. **Token** - Opaque 토큰 발급/검증/삭제, 로그인/로그아웃
+## Phase 1: 인증/인가 ✅ COMPLETED
+1. **User** - 회원가입 (`is_system_admin` 플래그 포함) ⚠️ NEEDS UPDATE (still has old `role` field)
+2. ~~**Token** - Opaque 토큰 발급/검증/삭제, 로그인/로그아웃~~ ✅ IMPLEMENTED
+   - **AuthenticationAccessSession** (1시간) + **AuthenticationRefreshSession** (30일)
+   - 로그인/로그아웃/세션갱신 구현
+   - Rotating refresh token pattern (SESSION_REFRESH 시 기존 세션 무효화)
+   - 단일 디바이스 정책 (NEW_SIGN_IN 시 모든 세션 무효화)
+   - HttpOnly 쿠키 전송, AuthenticationFilter 구현
+   - 세션 무효화 추적: revoked_at, revoked_reason (NEW_SIGN_IN/SIGN_OUT/SESSION_REFRESH)
 
 ## Phase 2: 그룹 (MVP)
 3. **InstructorGroup** - 그룹 CRUD, 그룹장 지정

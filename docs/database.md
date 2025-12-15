@@ -10,7 +10,8 @@ user ──< instructor_group_member >── instructor_group
 
 [인증]
 
-user ──< token
+user ──< authentication_access_session
+user ──< authentication_refresh_session
 
 
 [시즌 / 시즌 참여 / 티켓]
@@ -45,6 +46,7 @@ season ──< lesson
 ## Enum Types
 
 ```sql
+CREATE TYPE authentication_session_revoked_reason AS ENUM ('NEW_SIGN_IN', 'SIGN_OUT', 'SESSION_REFRESH');
 CREATE TYPE season_status AS ENUM ('ACTIVE', 'CLOSED');
 CREATE TYPE enrollment_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN');
 CREATE TYPE enrollment_log_type AS ENUM ('APPLIED', 'REAPPLIED', 'APPROVED', 'REJECTED', 'WITHDRAWN');
@@ -113,20 +115,44 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 4. token
+### 4. authentication_access_session
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | BIGSERIAL | PK | |
+| id | BIGSERIAL | PK | 내부용 |
+| uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
+| authentication_access_session | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 액세스 세션 ID (쿠키에 저장) |
 | user_id | BIGINT | NOT NULL | user.id 참조 |
-| token | VARCHAR(255) | UNIQUE, NOT NULL | Opaque token (1 day expiry) |
-| expires_at | TIMESTAMPTZ | NOT NULL | 만료 시간 |
-| created_at | TIMESTAMPTZ | NOT NULL | |
+| created_at | TIMESTAMPTZ | NOT NULL | 생성 시간 |
+| expires_at | TIMESTAMPTZ | NOT NULL | 만료 시간 (1시간) |
+| revoked_at | TIMESTAMPTZ | | 무효화 시간 |
+| revoked_reason | authentication_session_revoked_reason | | 무효화 이유 (NEW_SIGN_IN, SIGN_OUT, SESSION_REFRESH) |
 
-> 새 로그인 시 기존 토큰 삭제 → 단일 세션 유지
+> - 짧은 만료 시간 (1시간) - 보안 강화
+> - 새 로그인 시 기존 세션 무효화 (revoked_at 설정)
+> - HttpOnly 쿠키로 전송
 
 ---
 
-### 5. season
+### 5. authentication_refresh_session
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGSERIAL | PK | 내부용 |
+| uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
+| authentication_refresh_session | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 리프레시 세션 ID (쿠키에 저장) |
+| user_id | BIGINT | NOT NULL | user.id 참조 |
+| created_at | TIMESTAMPTZ | NOT NULL | 생성 시간 |
+| expires_at | TIMESTAMPTZ | NOT NULL | 만료 시간 (30일) |
+| revoked_at | TIMESTAMPTZ | | 무효화 시간 |
+| revoked_reason | authentication_session_revoked_reason | | 무효화 이유 (NEW_SIGN_IN, SIGN_OUT, SESSION_REFRESH) |
+
+> - 긴 만료 시간 (30일) - UX 개선 (remember-me)
+> - 세션 갱신 시 회전 (rotating refresh token) - 기존 세션 무효화
+> - 단일 디바이스 정책 (새 로그인 시 모든 세션 무효화)
+> - HttpOnly 쿠키로 전송
+
+---
+
+### 6. season
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -148,7 +174,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 6. season_enrollment
+### 7. season_enrollment
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -165,7 +191,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 7. season_enrollment_log
+### 8. season_enrollment_log
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -180,7 +206,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 8. season_ticket_account
+### 9. season_ticket_account
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -195,7 +221,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 9. ticket_log
+### 10. ticket_log
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -214,7 +240,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 10. lesson
+### 11. lesson
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -243,7 +269,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 11. lesson_instructor
+### 12. lesson_instructor
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -256,7 +282,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 12. reservation
+### 13. reservation
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -277,7 +303,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 13. lesson_attendance
+### 14. lesson_attendance
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -314,10 +340,19 @@ CREATE INDEX idx_instructor_group_member_group_id ON instructor_group_member(ins
 CREATE INDEX idx_instructor_group_member_user_id ON instructor_group_member(user_id);
 CREATE INDEX idx_instructor_group_member_deleted_at ON instructor_group_member(deleted_at);
 
--- token
-CREATE INDEX idx_token_token ON token(token);
-CREATE INDEX idx_token_user_id ON token(user_id);
-CREATE INDEX idx_token_expires_at ON token(expires_at);
+-- authentication_access_session
+CREATE INDEX idx_authentication_access_session_uuid ON authentication_access_session(uuid);
+CREATE INDEX idx_authentication_access_session_session ON authentication_access_session(authentication_access_session);
+CREATE INDEX idx_authentication_access_session_user_id ON authentication_access_session(user_id);
+CREATE INDEX idx_authentication_access_session_expires_at ON authentication_access_session(expires_at);
+CREATE INDEX idx_authentication_access_session_revoked_at ON authentication_access_session(revoked_at);
+
+-- authentication_refresh_session
+CREATE INDEX idx_authentication_refresh_session_uuid ON authentication_refresh_session(uuid);
+CREATE INDEX idx_authentication_refresh_session_session ON authentication_refresh_session(authentication_refresh_session);
+CREATE INDEX idx_authentication_refresh_session_user_id ON authentication_refresh_session(user_id);
+CREATE INDEX idx_authentication_refresh_session_expires_at ON authentication_refresh_session(expires_at);
+CREATE INDEX idx_authentication_refresh_session_revoked_at ON authentication_refresh_session(revoked_at);
 
 -- season
 CREATE INDEX idx_season_uuid ON season(uuid);

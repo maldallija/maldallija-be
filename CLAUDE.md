@@ -203,9 +203,34 @@ dev.maldallija.maldallijabe
 - Ask clarifying questions when requirements are ambiguous before proceeding
 - Log all significant actions to this file in English
 
+### Coding Standards
+
+#### Naming Conventions
+- **ALWAYS use full names** - NO abbreviations or shortened forms
+  - ✅ `RefreshAuthenticationSessionUseCase` ❌ `RefreshSessionUseCase`
+  - ✅ `authenticationAccessSession` ❌ `session` or `accessSession`
+  - ✅ `authenticationRefreshSessionId` ❌ `refreshId` or `sessionId`
+- Variables, methods, classes, parameters - all must use complete descriptive names
+- Only exception: Standard loop counters (i, j) in rare cases where context is obvious
+
+#### Constants
+- Use enums instead of string literals for type safety
+- Place constants in appropriate layer (adapter for HTTP details, domain for business concepts)
+
+#### Formatting
+- Consistent multi-line parameter calls for readability
+- Example:
+  ```kotlin
+  repository.revokeAllByUserId(
+      userId = userId,
+      reason = AuthenticationSessionRevokedReason.SIGN_OUT,
+  )
+  ```
+
 ## Related Documents
 
-- `docs/database.md` - DB schema design (13 tables: user, instructor_group, instructor_group_member, token, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
+- `docs/database.md` - DB schema design (14 tables: user, instructor_group, instructor_group_member, authentication_access_session, authentication_refresh_session, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
+  - Note: Originally specified "token" table (1 day expiry), implemented as dual-session system (access 1h + refresh 30d)
 - `docs/MEMO.md` - Future feature ideas (OAuth2, notifications, batch, role-based permissions, etc.)
 - `docs/MEMO2.md` - Role-based feature definitions + Development order (Phase 1~7)
 
@@ -217,8 +242,16 @@ dev.maldallija.maldallijabe
   - Ports/Service/Persistence/Web implemented with old structure
   - **TODO**: Migrate to new structure (remove role, add is_system_admin)
 
+- **Authentication System** (Phase 1) ✅ COMPLETED
+  - Dual session system: authentication_access_session (1h) + authentication_refresh_session (30d)
+  - Sign-in/Sign-out/Refresh endpoints with HttpOnly cookies
+  - AuthenticationFilter with ValidateAuthenticationSessionUseCase
+  - Session rotation on refresh (rotating refresh token pattern)
+  - Single device policy (new sign-in invalidates existing sessions)
+  - InvalidSessionException → 401 UNAUTHORIZED
+  - Full hexagonal architecture compliance
+
 ### Not Implemented Yet
-- **Token** (Phase 1) - login/logout, opaque token management
 - **InstructorGroup** (Phase 2)
   - InstructorGroup - group CRUD, leader designation
   - InstructorGroupMember - member management (N:M user-group)
@@ -243,11 +276,11 @@ dev.maldallija.maldallijabe
 ## Next Steps
 
 1. Migrate User domain to new schema (remove role, add is_system_admin)
-2. Implement Token domain (login, logout, token validation)
-3. Add Spring Security configuration
-4. Implement InstructorGroup + Permission system (5 entities)
-5. Implement Season + Enrollment (with enrollment log)
-6. Continue with Ticket → Lesson → Reservation → Attendance
+2. ~~Implement Token domain (login, logout, token validation)~~ ✅ COMPLETED (as dual-session system)
+3. ~~Add Spring Security configuration~~ ✅ COMPLETED (AuthenticationFilter + SecurityConfig)
+4. Implement InstructorGroup + InstructorGroupMember (Phase 2)
+5. Implement Season + Enrollment (with enrollment log) (Phase 3)
+6. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
 
 ## Development Log
 
@@ -335,3 +368,76 @@ dev.maldallija.maldallijabe
 - **Test class name updated**: `DageudakTestApplicationTests` → `MaldallijaBeApplicationTests`
 - **Project structure paths corrected**: Updated all file path references to match actual codebase structure
 - **Rationale**: CLAUDE.md contained outdated package references that would cause build commands to fail
+
+### 2025-12-15: Authentication/Authorization System Implementation
+
+**Implemented dual-session authentication system replacing planned single "token" table:**
+- Created authentication_access_session (1 hour expiry) and authentication_refresh_session (30 days expiry) tables
+- Replaced database.md spec's single "token" table with dual-session system for better security and UX
+- HttpOnly cookies (SameSite=Strict, Secure) for web security - prevents XSS/CSRF attacks
+- Industry standard expiry times based on Auth0/AWS Cognito/Firebase defaults
+
+**Authentication Features:**
+- **SignIn** (POST /api/v1/auth/sign-in): Issues both access and refresh sessions, invalidates all existing sessions (single device policy)
+- **SignOut** (POST /api/v1/auth/sign-out): Revokes all user sessions, deletes both cookies, uses @AuthenticationPrincipal annotation
+- **Refresh** (POST /api/v1/auth/sessions/refresh): Validates refresh session, issues new access+refresh pair, invalidates old sessions (rotating refresh token pattern)
+
+**Architecture Improvements:**
+- Achieved 100% hexagonal architecture compliance
+- AuthenticationFilter uses ValidateAuthenticationSessionUseCase (not Repository directly) - proper layering
+- SignInResult DTO moved from domain to application/port/in - domain models hidden from Controller
+- Cookie constants moved from domain to adapter/in/web/constant - HTTP details separated from business logic
+- Filter → UseCase → Service → Repository dependency flow maintained throughout
+
+**Code Quality Standards Established:**
+- **CRITICAL RULE**: Always use full naming - NO abbreviations (RefreshAuthenticationSessionUseCase not RefreshSessionUseCase)
+- Applied to all: classes (RefreshAuthenticationSessionService), methods (refreshAuthenticationSession), variables (authenticationAccessSession)
+- Enums for constants: AuthenticationSessionRevokedReason (NEW_SIGN_IN, SIGN_OUT, SESSION_REFRESH) instead of string literals
+- Consistent formatting: Multi-line parameter calls for readability throughout codebase
+
+**Security Features:**
+- BCrypt password hashing via Spring Security Crypto
+- Session validation in AuthenticationFilter for all protected endpoints
+- InvalidSessionException → 401 UNAUTHORIZED via GlobalExceptionHandler
+- OSIV disabled (spring.jpa.open-in-view: false) for performance - hexagonal architecture loads all data in Service layer
+- Excluded paths: /sign-in, /sign-up, /sessions/refresh, /swagger-ui/*, /v3/api-docs/*
+
+**Database Schema:**
+- authentication_access_session: id, uuid, authentication_access_session, user_id, created_at, expires_at, revoked_at, revoked_reason
+- authentication_refresh_session: id, uuid, authentication_refresh_session, user_id, created_at, expires_at, revoked_at, revoked_reason
+- Both use UUID for external API exposure, BIGSERIAL id for internal operations
+- Soft delete support via revoked_at timestamp
+
+**Configuration:**
+- AuthProperties: access-session.expiry-hours (1), refresh-session.expiry-days (30)
+- MaldallijaBeApplication: Excludes UserDetailsServiceAutoConfiguration to remove Spring Security warning
+- SecurityConfig: Custom filter chain with AuthenticationFilter
+
+**API Endpoints:**
+- POST /api/v1/auth/sign-in - Login with email/password, returns access+refresh cookies
+- POST /api/v1/auth/sign-out - Logout (requires authentication), deletes cookies
+- POST /api/v1/auth/sessions/refresh - Refresh sessions (uses refresh cookie, no authentication required)
+
+**Files Created:**
+- Domain: AuthenticationAccessSession, AuthenticationRefreshSession, AuthenticationSessionRevokedReason, InvalidSessionException
+- UseCases: SignInUseCase, SignOutUseCase, RefreshAuthenticationSessionUseCase, ValidateAuthenticationSessionUseCase
+- Services: SignInService, SignOutService, RefreshAuthenticationSessionService, ValidateAuthenticationSessionService
+- Repositories: AuthenticationAccessSessionRepository, AuthenticationRefreshSessionRepository (port/out interfaces)
+- Adapters: AuthenticationAccessSessionRepositoryAdapter, AuthenticationRefreshSessionRepositoryAdapter
+- Entities: AuthenticationAccessSessionEntity, AuthenticationRefreshSessionEntity
+- Mappers: AuthenticationAccessSessionMapper, AuthenticationRefreshSessionMapper
+- JPA Repositories: AuthenticationAccessSessionJpaRepository, AuthenticationRefreshSessionJpaRepository
+- Web: AuthController (sign-in/sign-out/refresh endpoints), AuthenticationSessionCookieName (cookie constants)
+- Filter: AuthenticationFilter (session validation)
+
+**Key Technical Decisions:**
+- Rotating refresh tokens: Refresh invalidates all old sessions for security
+- Single device policy: New sign-in invalidates all existing sessions
+- Session rotation reason tracking: NEW_SIGN_IN, SIGN_OUT, SESSION_REFRESH enum values
+- Cookie-based for web (most secure), designed to support headers for future mobile expansion
+- No JWT: Database-stored sessions for revocation support and simpler infrastructure
+
+**Differences from Initial Specification:**
+- **Initial spec** (docs/database.md line 115-125): Single "token" table with 1 day expiry
+- **Actual implementation**: Dual-session system (access 1h + refresh 30d) for better security/UX balance
+- **Rationale**: Industry standard approach provides better security (short-lived access tokens) while maintaining good UX (long-lived refresh tokens)

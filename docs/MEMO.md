@@ -4,9 +4,11 @@
 - Google login
 - Apple login
 
-## Token Enhancement
-- Split into Access Token (short-lived) + Refresh Token (long-lived)
-- Current: single opaque token with 1 day expiry
+## Token Enhancement ✅ IMPLEMENTED
+- ~~Split into Access Token (short-lived) + Refresh Token (long-lived)~~
+- ~~Current: single opaque token with 1 day expiry~~
+- **Implemented**: Dual-session system (authentication_access_session 1h + authentication_refresh_session 30d)
+- Rotating refresh token pattern with session revocation tracking
 
 ## Notification System
 - Season enrollment approval notice

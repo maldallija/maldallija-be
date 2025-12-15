@@ -3,6 +3,7 @@ package dev.maldallija.maldallijabe.auth.adapter.`in`.web
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignInRequest
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignUpRequest
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInUseCase
+import dev.maldallija.maldallijabe.auth.application.port.`in`.SignOutUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignUpUseCase
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -28,6 +30,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/auth")
 class AuthController(
     private val signInUseCase: SignInUseCase,
+    private val signOutUseCase: SignOutUseCase,
     private val signUpUseCase: SignUpUseCase,
 ) {
     @Operation(summary = "로그인")
@@ -76,6 +79,35 @@ class AuthController(
             .build()
     }
 
+    @Operation(summary = "로그아웃")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+            ),
+            ApiResponse(
+                responseCode = "401",
+                description = "인증되지 않은 사용자",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PostMapping("/sign-out")
+    fun signOut(
+        @AuthenticationPrincipal userId: Long,
+    ): ResponseEntity<Unit> {
+        signOutUseCase.signOut(userId)
+
+        val deletedRefreshCookie = deleteAuthenticationSessionCookie("authenticationRefreshSession")
+        val deletedAccessCookie = deleteAuthenticationSessionCookie("authenticationAccessSession")
+
+        return ResponseEntity
+            .ok()
+            .header(HttpHeaders.SET_COOKIE, deletedAccessCookie.toString())
+            .header(HttpHeaders.SET_COOKIE, deletedRefreshCookie.toString())
+            .build()
+    }
+
     @Operation(summary = "회원가입")
     @ApiResponses(
         value = [
@@ -114,6 +146,16 @@ class AuthController(
             .secure(true)
             .path("/")
             .maxAge(Duration.between(createdAt, expiresAt))
+            .sameSite("Strict")
+            .build()
+
+    private fun deleteAuthenticationSessionCookie(name: String): ResponseCookie =
+        ResponseCookie
+            .from(name, "")
+            .httpOnly(true)
+            .secure(true)
+            .path("/")
+            .maxAge(0)
             .sameSite("Strict")
             .build()
 }

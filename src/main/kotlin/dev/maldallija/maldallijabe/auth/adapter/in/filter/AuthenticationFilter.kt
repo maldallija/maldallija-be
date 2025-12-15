@@ -2,7 +2,8 @@ package dev.maldallija.maldallijabe.auth.adapter.`in`.filter
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
-import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
+import dev.maldallija.maldallijabe.auth.application.port.`in`.ValidateSessionUseCase
+import dev.maldallija.maldallijabe.auth.domain.exception.InvalidSessionException
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
@@ -16,7 +17,7 @@ import java.util.UUID
 
 @Component
 class AuthenticationFilter(
-    private val authenticationAccessSessionRepository: AuthenticationAccessSessionRepository,
+    private val validateSessionUseCase: ValidateSessionUseCase,
     private val objectMapper: ObjectMapper,
 ) : OncePerRequestFilter() {
     override fun doFilterInternal(
@@ -32,24 +33,19 @@ class AuthenticationFilter(
             return
         }
 
-        val session =
+        val userId =
             try {
-                authenticationAccessSessionRepository.findByAuthenticationAccessSession(
-                    UUID.fromString(
-                        authenticationAccessSession,
-                    ),
-                )
+                val sessionId = UUID.fromString(authenticationAccessSession)
+                validateSessionUseCase.validateSession(sessionId)
             } catch (e: IllegalArgumentException) {
                 sendUnauthorized(response, "Invalid authentication access session")
                 return
+            } catch (e: InvalidSessionException) {
+                sendUnauthorized(response, "Invalid or expired session")
+                return
             }
 
-        if (session == null || !session.isValid()) {
-            sendUnauthorized(response, "Invalid or expired session")
-            return
-        }
-
-        val authentication = UsernamePasswordAuthenticationToken(session.userId, null, emptyList())
+        val authentication = UsernamePasswordAuthenticationToken(userId, null, emptyList())
         SecurityContextHolder.getContext().authentication = authentication
 
         filterChain.doFilter(request, response)

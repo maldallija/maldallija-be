@@ -3,6 +3,7 @@ package dev.maldallija.maldallijabe.auth.application.service
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignOutUseCase
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationRefreshSessionRepository
+import dev.maldallija.maldallijabe.auth.domain.AuthenticationSessionRevokedReason
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -13,7 +14,13 @@ class SignOutService(
     private val authenticationAccessSessionRepository: AuthenticationAccessSessionRepository,
 ) : SignOutUseCase {
     override fun signOut(userId: Long) {
-        authenticationRefreshSessionRepository.revokeAllByUserId(userId, "SIGN_OUT")
-        authenticationAccessSessionRepository.revokeAllByUserId(userId, "SIGN_OUT")
+        authenticationRefreshSessionRepository.revokeAllByUserId(
+            userId,
+            AuthenticationSessionRevokedReason.SIGN_OUT,
+        )
+        authenticationAccessSessionRepository.revokeAllByUserId(
+            userId,
+            AuthenticationSessionRevokedReason.SIGN_OUT,
+        )
     }
 }

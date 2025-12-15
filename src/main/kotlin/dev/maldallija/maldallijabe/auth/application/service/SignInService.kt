@@ -7,6 +7,7 @@ import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationRefre
 import dev.maldallija.maldallijabe.auth.config.AuthProperties
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationAccessSession
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationRefreshSession
+import dev.maldallija.maldallijabe.auth.domain.AuthenticationSessionRevokedReason
 import dev.maldallija.maldallijabe.auth.domain.exception.InvalidCredentialsException
 import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -40,8 +41,11 @@ class SignInService(
             throw InvalidCredentialsException()
         }
 
-        authenticationRefreshSessionRepository.revokeAllByUserId(user.id, "NEW_SIGN_IN")
-        authenticationAccessSessionRepository.revokeAllByUserId(user.id, "NEW_SIGN_IN")
+        authenticationRefreshSessionRepository.revokeAllByUserId(
+            user.id,
+            AuthenticationSessionRevokedReason.NEW_SIGN_IN,
+        )
+        authenticationAccessSessionRepository.revokeAllByUserId(user.id, AuthenticationSessionRevokedReason.NEW_SIGN_IN)
 
         val now = Instant.now()
         val authenticationRefreshSession =

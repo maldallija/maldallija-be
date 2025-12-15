@@ -1,6 +1,7 @@
 package dev.maldallija.maldallijabe.auth.application.port.out
 
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationRefreshSession
+import dev.maldallija.maldallijabe.auth.domain.AuthenticationSessionRevokedReason
 import java.util.UUID
 
 interface AuthenticationRefreshSessionRepository {
@@ -10,6 +11,6 @@ interface AuthenticationRefreshSessionRepository {
 
     fun revokeAllByUserId(
         userId: Long,
-        reason: String,
+        reason: AuthenticationSessionRevokedReason,
     )
 }

@@ -2,6 +2,7 @@ package dev.maldallija.maldallijabe.auth.adapter.out.persistence
 
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationAccessSession
+import dev.maldallija.maldallijabe.auth.domain.AuthenticationSessionRevokedReason
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.util.UUID
@@ -23,11 +24,11 @@ class AuthenticationAccessSessionRepositoryAdapter(
 
     override fun revokeAllByUserId(
         userId: Long,
-        reason: String,
+        reason: AuthenticationSessionRevokedReason,
     ) {
         jpaRepository.revokeAllByUserId(
             userId = userId,
-            reason = reason,
+            reason = reason.value,
             revokedAt = Instant.now(),
         )
     }

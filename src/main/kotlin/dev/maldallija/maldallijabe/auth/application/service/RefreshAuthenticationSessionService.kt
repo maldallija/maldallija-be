@@ -7,6 +7,7 @@ import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationRefre
 import dev.maldallija.maldallijabe.auth.config.AuthProperties
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationAccessSession
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationRefreshSession
+import dev.maldallija.maldallijabe.auth.domain.AuthenticationSessionRevokedReason
 import dev.maldallija.maldallijabe.auth.domain.exception.InvalidSessionException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -31,8 +32,14 @@ class RefreshAuthenticationSessionService(
 
         val userId = authenticationRefreshSession.userId
 
-        authenticationRefreshSessionRepository.revokeAllByUserId(userId, "SESSION_REFRESH")
-        authenticationAccessSessionRepository.revokeAllByUserId(userId, "SESSION_REFRESH")
+        authenticationRefreshSessionRepository.revokeAllByUserId(
+            userId,
+            AuthenticationSessionRevokedReason.SESSION_REFRESH,
+        )
+        authenticationAccessSessionRepository.revokeAllByUserId(
+            userId,
+            AuthenticationSessionRevokedReason.SESSION_REFRESH,
+        )
 
         val now = Instant.now()
         val newAuthenticationRefreshSession =

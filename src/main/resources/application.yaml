@@ -6,7 +6,9 @@ spring:
 
 auth:
   access-session:
-    expiry-days: 7
+    expiry-hours: 1
+  refresh-session:
+    expiry-days: 30
 
 management:
   endpoints:

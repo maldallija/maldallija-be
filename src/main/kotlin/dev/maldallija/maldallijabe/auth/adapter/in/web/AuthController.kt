@@ -45,25 +45,36 @@ class AuthController(
     fun signIn(
         @RequestBody request: SignInRequest,
     ): ResponseEntity<Unit> {
-        val authenticationAccessSession =
+        val result =
             signInUseCase.signIn(
                 username = request.username,
                 password = request.password,
             )
 
-        val cookie =
+        val authenticationAccessCookie =
             ResponseCookie
-                .from("authenticationAccessSession", authenticationAccessSession.authenticationAccessSession.toString())
+                .from("authenticationAccessSession", result.accessSession.authenticationAccessSession.toString())
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .maxAge(Duration.ofDays(7))
+                .maxAge(Duration.between(result.accessSession.createdAt, result.accessSession.expiresAt))
+                .sameSite("Strict")
+                .build()
+
+        val authenticationRefreshCookie =
+            ResponseCookie
+                .from("authenticationRefreshSession", result.refreshSession.authenticationRefreshSession.toString())
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(Duration.between(result.refreshSession.createdAt, result.refreshSession.expiresAt))
                 .sameSite("Strict")
                 .build()
 
         return ResponseEntity
             .ok()
-            .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            .header(HttpHeaders.SET_COOKIE, authenticationAccessCookie.toString())
+            .header(HttpHeaders.SET_COOKIE, authenticationRefreshCookie.toString())
             .build()
     }
 

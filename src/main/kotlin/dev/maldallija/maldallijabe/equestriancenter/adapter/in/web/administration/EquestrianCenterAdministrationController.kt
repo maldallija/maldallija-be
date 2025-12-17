@@ -1,7 +1,6 @@
-package dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web
+package dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web.administration
 
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
-import dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web.dto.CreateEquestrianCenterRequest
 import dev.maldallija.maldallijabe.equestriancenter.application.port.`in`.CreateEquestrianCenterUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -17,10 +16,10 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "EquestrianCenter", description = "승마장 API")
+@Tag(name = "Administration - EquestrianCenter", description = "관리자 - 승마장 관리 API")
 @RestController
-@RequestMapping("/api/v1/equestrian-centers")
-class EquestrianCenterController(
+@RequestMapping("/api/v1/administration/equestrian-centers")
+class EquestrianCenterAdministrationController(
     private val createEquestrianCenterUseCase: CreateEquestrianCenterUseCase,
 ) {
     @Operation(summary = "승마장 생성")

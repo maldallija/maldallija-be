@@ -5,6 +5,7 @@ import dev.maldallija.maldallijabe.user.adapter.out.persistence.repository.UserJ
 import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
 import dev.maldallija.maldallijabe.user.domain.User
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 @Repository
 class UserRepositoryAdapter(
@@ -12,6 +13,16 @@ class UserRepositoryAdapter(
     private val userMapper: UserMapper,
 ) : UserRepository {
     override fun existsByUsername(username: String): Boolean = userJpaRepository.existsByUsername(username)
+
+    override fun findById(id: Long): User? =
+        userJpaRepository.findById(id).orElse(null)?.let {
+            userMapper.toDomain(it)
+        }
+
+    override fun findByUuid(uuid: UUID): User? =
+        userJpaRepository.findByUuid(uuid)?.let {
+            userMapper.toDomain(it)
+        }
 
     override fun findByUsername(username: String): User? = userJpaRepository.findByUsername(username)?.let { userMapper.toDomain(it) }
 

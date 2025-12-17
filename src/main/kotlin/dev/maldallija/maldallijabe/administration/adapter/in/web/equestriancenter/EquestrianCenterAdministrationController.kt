@@ -1,5 +1,6 @@
-package dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web.administration
+package dev.maldallija.maldallijabe.administration.adapter.`in`.web.equestriancenter
 
+import dev.maldallija.maldallijabe.administration.adapter.`in`.web.equestriancenter.dto.CreateEquestrianCenterRequest
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.equestriancenter.application.port.`in`.CreateEquestrianCenterUseCase
 import io.swagger.v3.oas.annotations.Operation

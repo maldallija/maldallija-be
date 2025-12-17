@@ -3,9 +3,9 @@
 ## ERD Overview
 
 ```
-[사용자 / 지도사 그룹]
+[사용자 / 승마장]
 
-user ──< instructor_group_member >── instructor_group
+user ──< instructor_group_member >── equestrian_center
 
 
 [인증]
@@ -16,7 +16,7 @@ user ──< authentication_refresh_session
 
 [시즌 / 시즌 참여 / 티켓]
 
-instructor_group ──< season
+equestrian_center ──< season
                          │
                          ├──< season_enrollment >── user
                          │         │
@@ -80,21 +80,24 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 2. instructor_group
+### 2. equestrian_center
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
 | uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
-| name | VARCHAR(200) | NOT NULL | 그룹명 (학원명) |
-| description | TEXT | | 그룹 설명 |
-| leader_user_id | BIGINT | NOT NULL | 그룹장 user.id 참조 |
+| name | VARCHAR(200) | NOT NULL | 승마장명 |
+| description | TEXT | | 승마장 설명 |
+| leader_user_id | BIGINT | NOT NULL | 센터장 user.id 참조 |
+| created_by | BIGINT | NOT NULL | 생성자 user.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
+| updated_by | BIGINT | NOT NULL | 최종 수정자 user.id 참조 |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
 
-> - 그룹당 그룹장 1명
+> - 센터당 센터장 1명
 > - leader_user_id는 user.id를 직접 참조 (순환 참조 방지)
-> - 그룹장은 반드시 해당 그룹의 instructor_group_member여야 함 (애플리케이션 레벨 검증)
+> - 센터장은 반드시 해당 센터의 instructor_group_member여야 함 (애플리케이션 레벨 검증)
+> - created_by, updated_by로 생성자와 최종 수정자 추적 (감사 추적)
 
 ---
 
@@ -103,15 +106,15 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
 | uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
-| instructor_group_id | BIGINT | NOT NULL | instructor_group.id 참조 |
+| equestrian_center_id | BIGINT | NOT NULL | equestrian_center.id 참조 |
 | user_id | BIGINT | NOT NULL | user.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
 
-> - UNIQUE(instructor_group_id, user_id) - 한 그룹 내 중복 가입 방지
-> - 한 사용자가 여러 그룹에 소속 가능 (N:M)
-> - MVP: 그룹 멤버 = 모든 지도사 권한 (세분화된 역할/권한은 Post-MVP)
+> - UNIQUE(equestrian_center_id, user_id) - 한 센터 내 중복 가입 방지
+> - 한 사용자가 여러 센터에 소속 가능 (N:M)
+> - MVP: 센터 멤버 = 모든 지도사 권한 (세분화된 역할/권한은 Post-MVP)
 
 ---
 
@@ -157,7 +160,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
 | uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
-| instructor_group_id | BIGINT | NOT NULL | instructor_group.id 참조 |
+| equestrian_center_id | BIGINT | NOT NULL | equestrian_center.id 참조 |
 | title | VARCHAR(200) | NOT NULL | 시즌명 |
 | description | TEXT | | 시즌 설명 |
 | start_date | DATE | NOT NULL | 시작일 |
@@ -170,7 +173,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
 
-> 시즌은 그룹 단위로 생성
+> 시즌은 센터 단위로 생성
 
 ---
 
@@ -329,14 +332,16 @@ CREATE INDEX idx_user_email ON "user"(email);
 CREATE INDEX idx_user_deleted_at ON "user"(deleted_at);
 CREATE INDEX idx_user_is_system_admin ON "user"(is_system_admin);
 
--- instructor_group
-CREATE INDEX idx_instructor_group_uuid ON instructor_group(uuid);
-CREATE INDEX idx_instructor_group_leader_user_id ON instructor_group(leader_user_id);
-CREATE INDEX idx_instructor_group_deleted_at ON instructor_group(deleted_at);
+-- equestrian_center
+CREATE INDEX idx_equestrian_center_uuid ON equestrian_center(uuid);
+CREATE INDEX idx_equestrian_center_leader_user_id ON equestrian_center(leader_user_id);
+CREATE INDEX idx_equestrian_center_created_by ON equestrian_center(created_by);
+CREATE INDEX idx_equestrian_center_updated_by ON equestrian_center(updated_by);
+CREATE INDEX idx_equestrian_center_deleted_at ON equestrian_center(deleted_at);
 
 -- instructor_group_member
 CREATE INDEX idx_instructor_group_member_uuid ON instructor_group_member(uuid);
-CREATE INDEX idx_instructor_group_member_group_id ON instructor_group_member(instructor_group_id);
+CREATE INDEX idx_instructor_group_member_center_id ON instructor_group_member(equestrian_center_id);
 CREATE INDEX idx_instructor_group_member_user_id ON instructor_group_member(user_id);
 CREATE INDEX idx_instructor_group_member_deleted_at ON instructor_group_member(deleted_at);
 
@@ -356,7 +361,7 @@ CREATE INDEX idx_authentication_refresh_session_revoked_at ON authentication_ref
 
 -- season
 CREATE INDEX idx_season_uuid ON season(uuid);
-CREATE INDEX idx_season_instructor_group_id ON season(instructor_group_id);
+CREATE INDEX idx_season_equestrian_center_id ON season(equestrian_center_id);
 CREATE INDEX idx_season_created_by ON season(created_by);
 CREATE INDEX idx_season_status ON season(status);
 CREATE INDEX idx_season_deleted_at ON season(deleted_at);
@@ -466,7 +471,7 @@ ALTER TABLE reservation ADD CONSTRAINT chk_reservation_tickets CHECK (ticket_use
 - 조회 시 deleted_at 확인하여 "탈퇴한 지도사" 표시
 - 이력 추적을 위해 참조 무결성 유지
 
-### Group Leader Management
-- `instructor_group.leader_user_id`는 user.id 참조
-- 그룹장은 반드시 해당 그룹의 active member여야 함 (애플리케이션 레벨 검증)
-- 그룹장 탈퇴 시: 새 그룹장 지정 후 탈퇴 가능
+### Center Leader Management
+- `equestrian_center.leader_user_id`는 user.id 참조
+- 센터장은 반드시 해당 센터의 active member여야 함 (애플리케이션 레벨 검증)
+- 센터장 탈퇴 시: 새 센터장 지정 후 탈퇴 가능

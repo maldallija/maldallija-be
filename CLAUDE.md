@@ -51,29 +51,30 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
 ## Domain Model
 
 ### User Roles
-- **System Admin**: Has `is_system_admin = true`, manages system-level operations (group creation, etc.)
-- **Group Member**: User belongs to InstructorGroup(s)
-  - **Group Leader**: Designated leader (instructor_group.leader_user_id), manages group members
+- **System Admin**: Has `is_system_admin = true`, manages system-level operations (equestrian center creation, etc.)
+- **Center Member**: User belongs to EquestrianCenter(s)
+  - **Center Leader**: Designated leader (equestrian_center.leader_user_id), manages center members
   - **Instructor**: Creates seasons/lessons, manages enrollments, checks attendance
-  - MVP: All group members have equal permissions (no role-based restrictions)
+  - MVP: All center members have equal permissions (no role-based restrictions)
 - **General Member**: Regular user who applies to seasons and books lessons
 
 ### Core Entities
 - **User**: System account
   - `is_system_admin`: boolean flag for system administrators
-  - Can belong to multiple InstructorGroups
-- **InstructorGroup**: Group (academy/center)
+  - Can belong to multiple EquestrianCenters
+- **EquestrianCenter**: Equestrian center (riding academy/club)
   - Created by System Admin
-  - Has 1 leader (group leader)
-  - MVP: All group members have equal instructor permissions
-- **InstructorGroupMember**: N:M relationship between User and InstructorGroup
-  - Links user to group
-  - One user can belong to multiple groups
+  - Has 1 leader (center leader)
+  - Tracks creator and last updater: `created_by`, `updated_by`
+  - MVP: All center members have equal instructor permissions
+- **InstructorGroupMember**: N:M relationship between User and EquestrianCenter
+  - Links user to center
+  - One user can belong to multiple centers
   - MVP: No role differentiation (Post-MVP: role-based permissions)
-- **Season**: Period (start~end date) created at group level
+- **Season**: Period (start~end date) created at center level
   - `capacity`: season enrollment limit
   - `default_ticket_count`: tickets granted upon enrollment approval
-  - `created_by`: tracks which group member created the season
+  - `created_by`: tracks which center member created the season
 - **SeasonEnrollment**: Member applies to Season, Instructor approves/rejects
   - Status: PENDING → APPROVED / REJECTED / WITHDRAWN
   - Upon approval, Member receives default tickets for that Season
@@ -84,14 +85,14 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
   - Balance tracked separately for each season
   - Created when enrollment is APPROVED
 - **TicketLog**: Transaction history (GRANT/USE/REFUND/ADDITIONAL)
-  - `granted_by`: tracks which group member granted tickets
+  - `granted_by`: tracks which center member granted tickets
   - Links to season_ticket_account instead of season+member
 - **Lesson**: Class within Season
-  - Instructor sets: date, time (1-hour unit), capacity, riding center (text)
+  - Instructor sets: date, time (1-hour unit), capacity, riding location (text)
   - Duration determines ticket cost (e.g., 2-hour lesson = 2 tickets)
   - Multiple Lessons allowed at same time slot within a Season
   - Lesson datetime must be within Season period
-  - `created_by`: tracks which group member created the lesson
+  - `created_by`: tracks which center member created the lesson
 - **LessonInstructor**: N:M relationship between Lesson and InstructorGroupMember
   - 1+ instructors can be assigned to a lesson
   - References InstructorGroupMember (not User directly)
@@ -101,16 +102,16 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
   - Links to season_ticket_account for payment tracking
 - **LessonAttendance**: Attendance tracking
   - Status: ATTENDED / NO_SHOW
-  - `checked_by`: tracks which group member checked attendance
+  - `checked_by`: tracks which center member checked attendance
   - `checked_at`: timestamp of attendance check
 
 ### Business Rules
 - Member must have APPROVED enrollment to book Lessons in that Season
 - Member can book multiple Lessons simultaneously
-- Instructor can only manage seasons/lessons within their group(s)
+- Instructor can only manage seasons/lessons within their center(s)
 - Approved member can book any lesson in the season (regardless of instructor)
-- MVP: All group members have equal permissions (no role-based restrictions)
-- Group creation process: System Admin creates group → Admin invites instructors → Admin designates leader
+- MVP: All center members have equal permissions (no role-based restrictions)
+- Center creation process: System Admin creates center → Admin invites instructors → Admin designates leader
 - No waitlist, no horse assignment, no level system (see docs/MEMO.md for future ideas)
 
 ### Capacity & Concurrency
@@ -176,9 +177,9 @@ dev.maldallija.maldallijabe
 │   │   ├── port/out           # 출력 포트 (영속성 인터페이스)
 │   │   └── service            # 유스케이스 구현
 │   └── domain                 # 도메인 모델
-├── token
-├── instructorgroup
-│   └── member                 # InstructorGroupMember subdomain
+├── auth                       # Authentication domain
+├── equestriancenter           # Equestrian center domain
+│   └── member                 # InstructorGroupMember subdomain (future)
 ├── season
 │   ├── enrollment             # SeasonEnrollment subdomain
 │   ├── enrollmentlog          # SeasonEnrollmentLog subdomain
@@ -229,7 +230,8 @@ dev.maldallija.maldallijabe
 
 ## Related Documents
 
-- `docs/database.md` - DB schema design (14 tables: user, instructor_group, instructor_group_member, authentication_access_session, authentication_refresh_session, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
+- `docs/database.md` - DB schema design (14 tables: user, equestrian_center, instructor_group_member, authentication_access_session, authentication_refresh_session, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
+  - Note: Originally specified "instructor_group" table, renamed to "equestrian_center" for clarity
   - Note: Originally specified "token" table (1 day expiry), implemented as dual-session system (access 1h + refresh 30d)
 - `docs/MEMO.md` - Future feature ideas (OAuth2, notifications, batch, role-based permissions, etc.)
 - `docs/MEMO2.md` - Role-based feature definitions + Development order (Phase 1~7)
@@ -251,11 +253,16 @@ dev.maldallija.maldallijabe
   - InvalidSessionException → 401 UNAUTHORIZED
   - Full hexagonal architecture compliance
 
-### Not Implemented Yet
-- **InstructorGroup** (Phase 2)
-  - InstructorGroup - group CRUD, leader designation
-  - InstructorGroupMember - member management (N:M user-group)
+- **EquestrianCenter** (Phase 2) ⚠️ PARTIALLY COMPLETED
+  - EquestrianCenter - center creation ✅ COMPLETED
+    - POST /api/v1/equestrian-centers (System Admin only)
+    - Audit fields: createdBy, updatedBy
+    - Returns 201 Created with no body
+  - EquestrianCenter - center retrieval/update/delete ❌ NOT IMPLEMENTED
+  - InstructorGroupMember - member management (N:M user-center) ❌ NOT IMPLEMENTED
   - MVP: All members have equal permissions (no role system)
+
+### Not Implemented Yet
 - **Season + Enrollment** (Phase 3)
   - Season - CRUD, status, capacity management
   - SeasonEnrollment - apply, approve/reject with status tracking
@@ -275,12 +282,14 @@ dev.maldallija.maldallijabe
 
 ## Next Steps
 
-1. Migrate User domain to new schema (remove role, add is_system_admin)
+1. ~~Migrate User domain to new schema (remove role, add is_system_admin)~~ ✅ COMPLETED
 2. ~~Implement Token domain (login, logout, token validation)~~ ✅ COMPLETED (as dual-session system)
 3. ~~Add Spring Security configuration~~ ✅ COMPLETED (AuthenticationFilter + SecurityConfig)
-4. Implement InstructorGroup + InstructorGroupMember (Phase 2)
-5. Implement Season + Enrollment (with enrollment log) (Phase 3)
-6. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
+4. ~~EquestrianCenter creation~~ ✅ COMPLETED (Phase 2 partial)
+5. Complete EquestrianCenter CRUD (retrieval, update, delete) (Phase 2)
+6. Implement InstructorGroupMember (Phase 2)
+7. Implement Season + Enrollment (with enrollment log) (Phase 3)
+8. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
 
 ## Development Log
 
@@ -441,3 +450,36 @@ dev.maldallija.maldallijabe
 - **Initial spec** (docs/database.md line 115-125): Single "token" table with 1 day expiry
 - **Actual implementation**: Dual-session system (access 1h + refresh 30d) for better security/UX balance
 - **Rationale**: Industry standard approach provides better security (short-lived access tokens) while maintaining good UX (long-lived refresh tokens)
+
+### 2025-12-17: InstructorGroup renamed to EquestrianCenter + Phase 2 partial implementation
+
+**Naming refactoring for domain clarity:**
+- **InstructorGroup → EquestrianCenter**: Renamed for better business domain representation
+  - Package: `instructorgroup` → `equestriancenter`
+  - Table: `instructor_group` → `equestrian_center`
+  - All related classes, files, and documentation updated
+  - Rationale: "Equestrian Center" is more intuitive and commonly used in actual riding facilities
+
+**EquestrianCenter creation feature implemented (Phase 2 partial):**
+- Domain: EquestrianCenter with audit tracking (createdBy, updatedBy)
+- UseCase: CreateEquestrianCenterUseCase (System Admin only)
+- API: POST /api/v1/equestrian-centers - Returns 201 Created with no body
+- Request DTO: Uses leaderUserUuid (UUID) instead of internal ID for external API
+- Added User.findByUuid() for UUID-based user lookup
+- Exception handling: UnauthorizedEquestrianCenterOperationException (403), EquestrianCenterNotFoundException (404)
+- Full hexagonal architecture compliance maintained
+
+**Files created:**
+- Domain: EquestrianCenter, EquestrianCenterException, UnauthorizedEquestrianCenterOperationException, EquestrianCenterNotFoundException
+- UseCase: CreateEquestrianCenterUseCase
+- Service: CreateEquestrianCenterService
+- Repository: EquestrianCenterRepository (port), EquestrianCenterRepositoryAdapter
+- Entity: EquestrianCenterEntity (with createdBy, updatedBy fields)
+- Mapper: EquestrianCenterMapper
+- JPA: EquestrianCenterJpaRepository
+- Web: EquestrianCenterController, CreateEquestrianCenterRequest, EquestrianCenterResponse (not used)
+
+**Audit tracking:**
+- Added createdBy, updatedBy fields to track who created/modified equestrian centers
+- Creator tracked on creation, updater tracked on future updates
+- Supports accountability and audit trail requirements

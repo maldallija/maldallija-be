@@ -49,7 +49,7 @@
 # 개발 순서
 
 ## Phase 1: 인증/인가 ✅ COMPLETED
-1. **User** - 회원가입 (`is_system_admin` 플래그 포함) ⚠️ NEEDS UPDATE (still has old `role` field)
+1. **User** - 회원가입 (`is_system_admin` 플래그 포함) ✅ COMPLETED
 2. ~~**Token** - Opaque 토큰 발급/검증/삭제, 로그인/로그아웃~~ ✅ IMPLEMENTED
    - **AuthenticationAccessSession** (1시간) + **AuthenticationRefreshSession** (30일)
    - 로그인/로그아웃/세션갱신 구현
@@ -58,13 +58,19 @@
    - HttpOnly 쿠키 전송, AuthenticationFilter 구현
    - 세션 무효화 추적: revoked_at, revoked_reason (NEW_SIGN_IN/SIGN_OUT/SESSION_REFRESH)
 
-## Phase 2: 그룹 (MVP)
-3. **InstructorGroup** - 그룹 CRUD, 그룹장 지정
-4. **InstructorGroupMember** - 사용자-그룹 N:M 관계
-5. MVP: 모든 그룹 멤버가 동일한 권한 (역할/권한 시스템은 Post-MVP)
+## Phase 2: 승마장 (MVP) ⚠️ IN PROGRESS
+3. **EquestrianCenter** (formerly InstructorGroup) - 승마장 CRUD, 센터장 지정
+   - ✅ COMPLETED: 생성 기능 (POST /api/v1/equestrian-centers)
+     - System Admin만 생성 가능
+     - Audit 필드: created_by, updated_by
+     - leaderUserUuid (UUID) 사용
+     - 응답: 201 Created (no body)
+   - ❌ NOT IMPLEMENTED: 조회/수정/삭제
+4. **InstructorGroupMember** - 사용자-센터 N:M 관계 ❌ NOT IMPLEMENTED
+5. MVP: 모든 센터 멤버가 동일한 권한 (역할/권한 시스템은 Post-MVP)
 
 ## Phase 3: 시즌 및 참여
-6. **Season** - CRUD, 상태 관리, 정원 관리 (그룹 단위, created_by는 instructor_group_member.id)
+6. **Season** - CRUD, 상태 관리, 정원 관리 (센터 단위, created_by는 instructor_group_member.id)
 7. **SeasonEnrollment** - 참여 신청, 승인/거절, 탈퇴
 8. **SeasonEnrollmentLog** - 참여 상태 변화 이력 (APPLIED/REAPPLIED/APPROVED/REJECTED/WITHDRAWN)
 
@@ -81,5 +87,5 @@
 14. **LessonAttendance** - 출석 체크 (checked_by는 instructor_group_member.id, checked_at 기록)
 
 ## Phase 7: 관리자 & Post-MVP
-15. **Admin 기능** - 시스템 관리자 UI, 그룹 관리, 전체 조회 (TBD)
+15. **Admin 기능** - 시스템 관리자 UI, 승마장 관리, 전체 조회 (TBD)
 16. **권한 시스템** - 역할 기반 권한 관리 (InstructorGroupRole, InstructorGroupPermission, InstructorGroupRolePermission)

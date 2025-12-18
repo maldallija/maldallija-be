@@ -1,5 +1,6 @@
 package dev.maldallija.maldallijabe.common.config
 
+import dev.maldallija.maldallijabe.auth.adapter.`in`.filter.AdministratorAuthorizationFilter
 import dev.maldallija.maldallijabe.auth.adapter.`in`.filter.AuthenticationFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -15,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 class SecurityConfig(
     private val authenticationFilter: AuthenticationFilter,
+    private val administratorAuthorizationFilter: AdministratorAuthorizationFilter,
 ) {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
@@ -23,6 +25,7 @@ class SecurityConfig(
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { it.anyRequest().permitAll() }
             .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterAfter(administratorAuthorizationFilter, AuthenticationFilter::class.java)
             .build()
 
     @Bean

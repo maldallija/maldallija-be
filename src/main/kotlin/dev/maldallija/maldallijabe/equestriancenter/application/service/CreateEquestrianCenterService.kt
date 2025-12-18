@@ -3,7 +3,6 @@ package dev.maldallija.maldallijabe.equestriancenter.application.service
 import dev.maldallija.maldallijabe.equestriancenter.application.port.`in`.CreateEquestrianCenterUseCase
 import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.domain.EquestrianCenter
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
 import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
 import org.springframework.stereotype.Service
@@ -18,20 +17,11 @@ class CreateEquestrianCenterService(
     private val userRepository: UserRepository,
 ) : CreateEquestrianCenterUseCase {
     override fun createEquestrianCenter(
+        administratorId: Long,
         name: String,
         description: String?,
         leaderUserUuid: UUID,
-        requestingUserId: Long,
     ) {
-        val requestingUser =
-            userRepository.findById(requestingUserId)
-                ?: throw UserNotFoundException()
-
-        // TODO-noah: 해당 부분 나중에 확인
-        if (!requestingUser.isSystemAdmin) {
-            throw UnauthorizedEquestrianCenterOperationException()
-        }
-
         val leaderUser =
             userRepository.findByUuid(leaderUserUuid)
                 ?: throw UserNotFoundException()
@@ -45,9 +35,9 @@ class CreateEquestrianCenterService(
                 name = name,
                 description = description,
                 leaderUserId = leaderUser.id,
-                createdBy = requestingUser.id,
+                createdBy = administratorId,
                 createdAt = now,
-                updatedBy = requestingUser.id,
+                updatedBy = administratorId,
                 updatedAt = now,
                 deletedAt = null,
             )

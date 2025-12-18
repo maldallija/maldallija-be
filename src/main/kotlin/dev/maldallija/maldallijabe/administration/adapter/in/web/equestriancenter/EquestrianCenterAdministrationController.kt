@@ -49,14 +49,14 @@ class EquestrianCenterAdministrationController(
     )
     @PostMapping
     fun createEquestrianCenter(
-        @AuthenticationPrincipal requestingUserId: Long,
+        @AuthenticationPrincipal administratorId: Long,
         @RequestBody request: CreateEquestrianCenterRequest,
     ): ResponseEntity<Unit> {
         createEquestrianCenterUseCase.createEquestrianCenter(
+            administratorId = administratorId,
             name = request.name,
             description = request.description,
             leaderUserUuid = request.leaderUserUuid,
-            requestingUserId = requestingUserId,
         )
 
         return ResponseEntity.status(HttpStatus.CREATED).build()

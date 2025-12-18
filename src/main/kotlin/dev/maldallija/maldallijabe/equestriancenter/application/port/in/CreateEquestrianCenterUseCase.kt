@@ -4,9 +4,9 @@ import java.util.UUID
 
 interface CreateEquestrianCenterUseCase {
     fun createEquestrianCenter(
+        administratorId: Long,
         name: String,
         description: String?,
         leaderUserUuid: UUID,
-        requestingUserId: Long,
     )
 }

@@ -1,6 +1,7 @@
 package dev.maldallija.maldallijabe.common.adapter.`in`.web
 
 import dev.maldallija.maldallijabe.auth.domain.exception.AuthException
+import dev.maldallija.maldallijabe.auth.domain.exception.InsufficientPermissionsException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
@@ -35,6 +36,18 @@ class GlobalExceptionHandler {
             )
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(InsufficientPermissionsException::class)
+    fun handleInsufficientPermissionsException(e: InsufficientPermissionsException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Forbidden",
+            )
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
             .body(errorResponse)
     }
 

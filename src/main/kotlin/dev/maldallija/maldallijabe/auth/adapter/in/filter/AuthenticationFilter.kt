@@ -56,6 +56,7 @@ class AuthenticationFilter(
         return path.startsWith("/api/v1/auth/sign-in") ||
             path.startsWith("/api/v1/auth/sign-up") ||
             path.startsWith("/api/v1/auth/sessions/refresh") ||
+            path.startsWith("/api/v1/equestrian-centers") ||
             path.startsWith("/swagger-ui") ||
             path.startsWith("/v3/api-docs")
     }

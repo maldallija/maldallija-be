@@ -4,6 +4,8 @@ import dev.maldallija.maldallijabe.equestriancenter.adapter.out.persistence.mapp
 import dev.maldallija.maldallijabe.equestriancenter.adapter.out.persistence.repository.EquestrianCenterJpaRepository
 import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.domain.EquestrianCenter
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 import java.util.UUID
 
@@ -12,6 +14,11 @@ class EquestrianCenterRepositoryAdapter(
     private val equestrianCenterJpaRepository: EquestrianCenterJpaRepository,
     private val equestrianCenterMapper: EquestrianCenterMapper,
 ) : EquestrianCenterRepository {
+    override fun findAll(pageable: Pageable): Page<EquestrianCenter> =
+        equestrianCenterJpaRepository
+            .findAllByDeletedAtIsNull(pageable)
+            .map { equestrianCenterMapper.toDomain(it) }
+
     override fun findByUuid(uuid: UUID): EquestrianCenter? =
         equestrianCenterJpaRepository.findByUuidAndDeletedAtIsNull(uuid)?.let {
             equestrianCenterMapper.toDomain(it)

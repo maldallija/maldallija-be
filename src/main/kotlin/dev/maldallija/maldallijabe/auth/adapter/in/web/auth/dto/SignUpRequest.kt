@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto
+package dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 

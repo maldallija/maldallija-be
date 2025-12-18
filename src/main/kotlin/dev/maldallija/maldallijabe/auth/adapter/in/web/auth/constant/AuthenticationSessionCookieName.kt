@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant
+package dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth.constant
 
 object AuthenticationSessionCookieName {
     const val ACCESS_SESSION = "authenticationAccessSession"

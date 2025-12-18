@@ -1,7 +1,7 @@
 package dev.maldallija.maldallijabe.auth.adapter.`in`.filter
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth.constant.AuthenticationSessionCookieName
 import dev.maldallija.maldallijabe.auth.application.port.`in`.ValidateAuthenticationSessionUseCase
 import dev.maldallija.maldallijabe.auth.domain.exception.InvalidSessionException
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse

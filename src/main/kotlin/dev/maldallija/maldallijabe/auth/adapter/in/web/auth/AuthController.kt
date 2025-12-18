@@ -1,8 +1,8 @@
-package dev.maldallija.maldallijabe.auth.adapter.`in`.web
+package dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth
 
-import dev.maldallija.maldallijabe.auth.adapter.`in`.web.constant.AuthenticationSessionCookieName
-import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignInRequest
-import dev.maldallija.maldallijabe.auth.adapter.`in`.web.dto.SignUpRequest
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth.constant.AuthenticationSessionCookieName
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth.dto.SignInRequest
+import dev.maldallija.maldallijabe.auth.adapter.`in`.web.auth.dto.SignUpRequest
 import dev.maldallija.maldallijabe.auth.application.port.`in`.RefreshAuthenticationSessionUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignInUseCase
 import dev.maldallija.maldallijabe.auth.application.port.`in`.SignOutUseCase

@@ -3,9 +3,11 @@
 ## ERD Overview
 
 ```
-[사용자 / 승마장]
+[사용자 / 승마장 / 초대]
 
-user ──< instructor_group_member >── equestrian_center
+user ──< equestrian_center_invitation >── equestrian_center
+                                          │
+user ──< equestrian_center_staff >───────┘
 
 
 [인증]
@@ -27,11 +29,11 @@ equestrian_center ──< season
                                     └──< ticket_log
 
 
-[레슨 / 지도사 / 예약 / 출석]
+[레슨 / 직원 / 예약 / 출석]
 
 season ──< lesson
            │
-           ├──< lesson_instructor >── instructor_group_member
+           ├──< lesson_instructor >── equestrian_center_staff
            │
            └──< reservation >── user
                         │
@@ -47,6 +49,8 @@ season ──< lesson
 
 ```sql
 CREATE TYPE authentication_session_revoked_reason AS ENUM ('NEW_SIGN_IN', 'SIGN_OUT', 'SESSION_REFRESH');
+CREATE TYPE invitation_status AS ENUM ('INVITED', 'APPROVED', 'REJECTED', 'EXPIRED', 'WITHDRAWN');
+CREATE TYPE member_left_reason AS ENUM ('LEFT_VOLUNTARILY', 'EXPELLED');
 CREATE TYPE season_status AS ENUM ('ACTIVE', 'CLOSED');
 CREATE TYPE enrollment_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'WITHDRAWN');
 CREATE TYPE enrollment_log_type AS ENUM ('APPLIED', 'REAPPLIED', 'APPROVED', 'REJECTED', 'WITHDRAWN');
@@ -74,9 +78,10 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
 
-> - 시스템 관리자: is_system_admin = true
-> - 지도사: instructor_group_member 레코드 존재
-> - 일반 회원: 둘 다 해당 없음
+> - 시스템 관리자(Admin): is_system_admin = true
+> - 승마장 직원(Staff): equestrian_center_staff 레코드 존재
+> - 시즌 참여자(Member): season_enrollment 레코드 존재
+> - 일반 사용자(User): 가입만 한 상태
 
 ---
 
@@ -87,38 +92,76 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
 | name | VARCHAR(200) | NOT NULL | 승마장명 |
 | description | TEXT | | 승마장 설명 |
-| leader_user_id | BIGINT | NOT NULL | 센터장 user.id 참조 |
+| representative_user_id | BIGINT | NOT NULL | 대표 사용자 user.id 참조 |
 | created_by | BIGINT | NOT NULL | 생성자 user.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_by | BIGINT | NOT NULL | 최종 수정자 user.id 참조 |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
 
-> - 센터당 센터장 1명
-> - leader_user_id는 user.id를 직접 참조 (순환 참조 방지)
-> - 센터장은 반드시 해당 센터의 instructor_group_member여야 함 (애플리케이션 레벨 검증)
+> - 센터당 대표 사용자 1명
+> - representative_user_id는 user.id를 직접 참조 (순환 참조 방지)
+> - 대표는 반드시 해당 센터의 equestrian_center_staff여야 함 (애플리케이션 레벨 검증)
 > - created_by, updated_by로 생성자와 최종 수정자 추적 (감사 추적)
+> - Post-MVP: 대표는 법적/비즈니스 대표, 기능 권한은 role_id로 분리
 
 ---
 
-### 3. instructor_group_member
+### 3. equestrian_center_invitation
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | BIGSERIAL | PK | 내부용 |
+| uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
+| equestrian_center_id | BIGINT | NOT NULL | equestrian_center.id 참조 |
+| user_id | BIGINT | NOT NULL | user.id 참조 (피초대자) |
+| invited_by | BIGINT | NOT NULL | user.id 참조 (초대자) |
+| status | invitation_status | NOT NULL DEFAULT 'INVITED' | INVITED / APPROVED / REJECTED / EXPIRED / WITHDRAWN |
+| invited_at | TIMESTAMPTZ | NOT NULL | 초대 시각 |
+| responded_at | TIMESTAMPTZ | | 응답 시각 (승인/거절 시) |
+| expires_at | TIMESTAMPTZ | NOT NULL | 만료 시각 (invited_at + 7일) |
+| created_at | TIMESTAMPTZ | NOT NULL | |
+| updated_at | TIMESTAMPTZ | NOT NULL | |
+
+> - 로그형 테이블 - 같은 사용자에게 여러 초대 레코드 생성 가능 (재초대 이력 보존)
+> - 초대 만료: 7일 (배치 없이 조회 시점에 체크)
+> - 초대 취소: INVITED → WITHDRAWN (대표만)
+> - 재초대 정책:
+>   - REJECTED/EXPIRED/WITHDRAWN 후 재초대 가능 (새 레코드 생성)
+>   - INVITED 상태가 이미 있으면 재초대 불가 (중복 방지)
+> - 승인 시: INVITED → APPROVED, equestrian_center_staff 레코드 생성
+> - 거절 시: INVITED → REJECTED
+
+---
+
+### 4. equestrian_center_staff
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
 | uuid | UUID | UNIQUE, NOT NULL, DEFAULT gen_random_uuid() | 외부 API용 |
 | equestrian_center_id | BIGINT | NOT NULL | equestrian_center.id 참조 |
 | user_id | BIGINT | NOT NULL | user.id 참조 |
+| joined_at | TIMESTAMPTZ | NOT NULL | 가입 시각 (초대 승인 시각) |
+| left_at | TIMESTAMPTZ | | 탈퇴/추방 시각 |
+| left_by | BIGINT | | user.id 참조 (추방한 사용자, NULL = 스스로 탈퇴) |
+| left_reason | member_left_reason | | LEFT_VOLUNTARILY / EXPELLED |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
-| deleted_at | TIMESTAMPTZ | | soft delete |
+| deleted_at | TIMESTAMPTZ | | soft delete (실수 복구용) |
 
-> - UNIQUE(equestrian_center_id, user_id) - 한 센터 내 중복 가입 방지
+> - 승마장 직원 (staff) 관리: 강사, 매니저 등 모든 직원
+> - 입퇴사 이력 보존: 탈퇴/추방 후 재가입 시 새 레코드 생성
+> - 활성 직원: `WHERE left_at IS NULL AND deleted_at IS NULL`
+> - UNIQUE INDEX (equestrian_center_id, user_id) WHERE left_at IS NULL AND deleted_at IS NULL
+>   - 한 센터에 중복 활성 직원 방지
+>   - 탈퇴/추방 후 재가입 가능 (새 레코드)
 > - 한 사용자가 여러 센터에 소속 가능 (N:M)
-> - MVP: 센터 멤버 = 모든 지도사 권한 (세분화된 역할/권한은 Post-MVP)
+> - MVP: 모든 직원이 동일한 권한 (세분화된 역할/권한은 Post-MVP)
+> - Post-MVP: role 컬럼 추가 (INSTRUCTOR, MANAGER, ADMIN)
+> - 대표 변경: representative_user_id 업데이트, 이전 대표는 일반 직원으로 유지
 
 ---
 
-### 4. authentication_access_session
+### 5. authentication_access_session
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -136,7 +179,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 5. authentication_refresh_session
+### 6. authentication_refresh_session
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -155,7 +198,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 6. season
+### 7. season
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -168,7 +211,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | capacity | INTEGER | NOT NULL | 시즌 정원 |
 | default_ticket_count | INTEGER | NOT NULL | 참여 승인 시 기본 부여 티켓 수 |
 | status | season_status | NOT NULL DEFAULT 'ACTIVE' | ACTIVE / CLOSED |
-| created_by | BIGINT | NOT NULL | 생성한 instructor_group_member.id 참조 |
+| created_by | BIGINT | NOT NULL | 생성한 equestrian_center_staff.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
@@ -177,7 +220,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 7. season_enrollment
+### 8. season_enrollment
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -194,7 +237,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 8. season_enrollment_log
+### 9. season_enrollment_log
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -209,7 +252,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 9. season_ticket_account
+### 10. season_ticket_account
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -224,7 +267,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 10. ticket_log
+### 11. ticket_log
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
@@ -233,7 +276,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | type | ticket_log_type | NOT NULL | GRANT / USE / REFUND / ADDITIONAL |
 | description | VARCHAR(500) | | 비고 |
 | reservation_id | BIGINT | | 관련 reservation.id (USE/REFUND 타입만 해당) |
-| granted_by | BIGINT | | 티켓 부여한 instructor_group_member.id (GRANT/ADDITIONAL만 해당) |
+| granted_by | BIGINT | | 티켓 부여한 equestrian_center_staff.id (GRANT/ADDITIONAL만 해당) |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 
 > - GRANT: 참여 승인 시 기본 티켓 부여
@@ -243,7 +286,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 11. lesson
+### 12. lesson
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -259,7 +302,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | riding_center | VARCHAR(200) | | 승마장 (텍스트) |
 | status | lesson_status | NOT NULL DEFAULT 'SCHEDULED' | SCHEDULED / CANCELLED |
 | version | BIGINT | NOT NULL DEFAULT 0 | 낙관적 락 (동시성 제어) |
-| created_by | BIGINT | NOT NULL | 생성한 instructor_group_member.id 참조 |
+| created_by | BIGINT | NOT NULL | 생성한 equestrian_center_staff.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
@@ -272,20 +315,20 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 12. lesson_instructor
+### 13. lesson_instructor
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
 | lesson_id | BIGINT | NOT NULL | lesson.id 참조 |
-| instructor_group_member_id | BIGINT | NOT NULL | instructor_group_member.id 참조 |
+| staff_id | BIGINT | NOT NULL | equestrian_center_staff.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 
-> - UNIQUE(lesson_id, instructor_group_member_id)
-> - 한 레슨에 1명 이상의 지도사 배정 가능
+> - UNIQUE(lesson_id, staff_id)
+> - 한 레슨에 1명 이상의 직원(강사) 배정 가능
 
 ---
 
-### 13. reservation
+### 14. reservation
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | 내부용 |
@@ -306,20 +349,20 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 
 ---
 
-### 14. lesson_attendance
+### 15. lesson_attendance
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | BIGSERIAL | PK | |
 | reservation_id | BIGINT | UNIQUE, NOT NULL | reservation.id 참조 |
 | status | attendance_status | NOT NULL | ATTENDED / NO_SHOW |
-| checked_by | BIGINT | NOT NULL | 출석 체크한 instructor_group_member.id 참조 |
+| checked_by | BIGINT | NOT NULL | 출석 체크한 equestrian_center_staff.id 참조 |
 | checked_at | TIMESTAMPTZ | NOT NULL | 출석 체크 시간 |
 | note | TEXT | | 비고 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 
 > - reservation과 1:1 관계
-> - 출석 체크 담당 지도사 추적
+> - 출석 체크 담당 직원 추적
 
 ---
 
@@ -334,16 +377,30 @@ CREATE INDEX idx_user_is_system_admin ON "user"(is_system_admin);
 
 -- equestrian_center
 CREATE INDEX idx_equestrian_center_uuid ON equestrian_center(uuid);
-CREATE INDEX idx_equestrian_center_leader_user_id ON equestrian_center(leader_user_id);
+CREATE INDEX idx_equestrian_center_representative_user_id ON equestrian_center(representative_user_id);
 CREATE INDEX idx_equestrian_center_created_by ON equestrian_center(created_by);
 CREATE INDEX idx_equestrian_center_updated_by ON equestrian_center(updated_by);
 CREATE INDEX idx_equestrian_center_deleted_at ON equestrian_center(deleted_at);
 
--- instructor_group_member
-CREATE INDEX idx_instructor_group_member_uuid ON instructor_group_member(uuid);
-CREATE INDEX idx_instructor_group_member_center_id ON instructor_group_member(equestrian_center_id);
-CREATE INDEX idx_instructor_group_member_user_id ON instructor_group_member(user_id);
-CREATE INDEX idx_instructor_group_member_deleted_at ON instructor_group_member(deleted_at);
+-- equestrian_center_invitation
+CREATE INDEX idx_invitation_uuid ON equestrian_center_invitation(uuid);
+CREATE INDEX idx_invitation_center_id ON equestrian_center_invitation(equestrian_center_id);
+CREATE INDEX idx_invitation_user_id ON equestrian_center_invitation(user_id);
+CREATE INDEX idx_invitation_invited_by ON equestrian_center_invitation(invited_by);
+CREATE INDEX idx_invitation_status ON equestrian_center_invitation(status);
+CREATE INDEX idx_invitation_user_center_status ON equestrian_center_invitation(user_id, equestrian_center_id, status);
+CREATE INDEX idx_invitation_expires_at ON equestrian_center_invitation(expires_at) WHERE status = 'INVITED';
+
+-- equestrian_center_staff
+CREATE INDEX idx_staff_uuid ON equestrian_center_staff(uuid);
+CREATE INDEX idx_staff_center_id ON equestrian_center_staff(equestrian_center_id);
+CREATE INDEX idx_staff_user_id ON equestrian_center_staff(user_id);
+CREATE INDEX idx_staff_left_at ON equestrian_center_staff(left_at);
+CREATE INDEX idx_staff_left_by ON equestrian_center_staff(left_by);
+CREATE INDEX idx_staff_deleted_at ON equestrian_center_staff(deleted_at);
+-- 부분 UNIQUE 인덱스: 활성 멤버 중복 방지 (탈퇴 후 재가입 가능)
+CREATE UNIQUE INDEX idx_staff_active_unique ON equestrian_center_staff(equestrian_center_id, user_id)
+WHERE left_at IS NULL AND deleted_at IS NULL;
 
 -- authentication_access_session
 CREATE INDEX idx_authentication_access_session_uuid ON authentication_access_session(uuid);
@@ -402,7 +459,7 @@ CREATE INDEX idx_lesson_deleted_at ON lesson(deleted_at);
 
 -- lesson_instructor
 CREATE INDEX idx_lesson_instructor_lesson_id ON lesson_instructor(lesson_id);
-CREATE INDEX idx_lesson_instructor_instructor_group_member_id ON lesson_instructor(instructor_group_member_id);
+CREATE INDEX idx_lesson_instructor_staff_id ON lesson_instructor(staff_id);
 
 -- reservation
 CREATE INDEX idx_reservation_uuid ON reservation(uuid);

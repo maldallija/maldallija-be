@@ -50,13 +50,26 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
 
 ## Domain Model
 
+### Naming Convention (명명 체계)
+- **Admin**: 서비스 운영자 (System Admin, `is_system_admin = true`)
+- **Representative**: 승마장 대표 (`equestrian_center.representative_user_id`)
+- **Staff**: 승마장 직원 (`equestrian_center_staff` - 강사, 매니저 등)
+- **Member**: 시즌 참여자 (`season_enrollment` - 수강생)
+- **User**: 일반 사용자 (가입만 한 상태)
+
 ### User Roles
-- **System Admin**: Has `is_system_admin = true`, manages system-level operations (equestrian center creation, etc.)
-- **Center Member**: User belongs to EquestrianCenter(s)
-  - **Center Leader**: Designated leader (equestrian_center.leader_user_id), manages center members
-  - **Instructor**: Creates seasons/lessons, manages enrollments, checks attendance
-  - MVP: All center members have equal permissions (no role-based restrictions)
-- **General Member**: Regular user who applies to seasons and books lessons
+- **System Admin (관리자)**: Has `is_system_admin = true`, manages system-level operations (equestrian center creation, etc.)
+- **Center Staff (직원)**: User belongs to EquestrianCenter(s) via equestrian_center_staff
+  - **Center Representative (대표)**: Designated representative (equestrian_center.representative_user_id), legal/business owner
+    - Invites users to center, manages staff expulsion
+    - Can configure staff list visibility (public vs staff-only) - Post-MVP
+    - Post-MVP: Representative is separate from functional permissions (role-based)
+  - **Staff (직원)**: Creates seasons/lessons, manages enrollments, checks attendance
+    - MVP: Instructor role only
+    - Post-MVP: INSTRUCTOR, MANAGER, ADMIN roles
+  - MVP: All center staff have equal permissions (no role-based restrictions)
+- **Season Member (수강생)**: User who applied and approved to season, books lessons
+- **General User**: Registered user who hasn't joined any center or season
 
 ### Core Entities
 - **User**: System account
@@ -64,18 +77,30 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
   - Can belong to multiple EquestrianCenters
 - **EquestrianCenter**: Equestrian center (riding academy/club)
   - Created by System Admin
-  - Has 1 leader (center leader)
+  - Has 1 representative user (center representative)
   - Tracks creator and last updater: `created_by`, `updated_by`
   - MVP: All center members have equal instructor permissions
-- **InstructorGroupMember**: N:M relationship between User and EquestrianCenter
-  - Links user to center
-  - One user can belong to multiple centers
-  - MVP: No role differentiation (Post-MVP: role-based permissions)
+- **EquestrianCenterInvitation**: Invitation from representative to user (log-style table)
+  - Status: INVITED → APPROVED / REJECTED / EXPIRED / WITHDRAWN
+  - Invited by representative, responded by invitee
+  - Expires in 7 days (checked at query time, no batch)
+  - Multiple invitation records possible per user (history preserved)
+  - Re-invitation allowed after REJECTED/EXPIRED/WITHDRAWN
+  - Cannot re-invite if INVITED status already exists
+- **EquestrianCenterStaff**: N:M relationship between User and EquestrianCenter (승마장 직원)
+  - Links user to center (active staff membership)
+  - Created when invitation APPROVED
+  - Tracks join/leave history: `joined_at`, `left_at`, `left_by`, `left_reason`
+  - Leave reasons: LEFT_VOLUNTARILY (self), EXPELLED (by representative)
+  - New record created on re-join after leave (preserves employment history)
+  - One user can belong to multiple centers as staff
+  - MVP: All staff have equal permissions (instructor only)
+  - Post-MVP: role column (INSTRUCTOR, MANAGER, ADMIN)
 - **Season**: Period (start~end date) created at center level
   - `capacity`: season enrollment limit
   - `default_ticket_count`: tickets granted upon enrollment approval
-  - `created_by`: tracks which center member created the season
-- **SeasonEnrollment**: Member applies to Season, Instructor approves/rejects
+  - `created_by`: tracks which center staff created the season
+- **SeasonEnrollment**: Member (수강생) applies to Season, Staff approves/rejects
   - Status: PENDING → APPROVED / REJECTED / WITHDRAWN
   - Upon approval, Member receives default tickets for that Season
 - **SeasonEnrollmentLog**: History of enrollment status changes
@@ -85,33 +110,40 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
   - Balance tracked separately for each season
   - Created when enrollment is APPROVED
 - **TicketLog**: Transaction history (GRANT/USE/REFUND/ADDITIONAL)
-  - `granted_by`: tracks which center member granted tickets
+  - `granted_by`: tracks which center staff granted tickets
   - Links to season_ticket_account instead of season+member
 - **Lesson**: Class within Season
-  - Instructor sets: date, time (1-hour unit), capacity, riding location (text)
+  - Staff sets: date, time (1-hour unit), capacity, riding location (text)
   - Duration determines ticket cost (e.g., 2-hour lesson = 2 tickets)
   - Multiple Lessons allowed at same time slot within a Season
   - Lesson datetime must be within Season period
-  - `created_by`: tracks which center member created the lesson
-- **LessonInstructor**: N:M relationship between Lesson and InstructorGroupMember
-  - 1+ instructors can be assigned to a lesson
-  - References InstructorGroupMember (not User directly)
+  - `created_by`: tracks which center staff created the lesson
+- **LessonInstructor**: N:M relationship between Lesson and EquestrianCenterStaff
+  - 1+ staff (instructors) can be assigned to a lesson
+  - References EquestrianCenterStaff (not User directly)
 - **Reservation**: Approved Member books Lesson using Tickets
   - Cancel before D-3: Ticket refunded
   - Cancel from D-2: No refund
   - Links to season_ticket_account for payment tracking
 - **LessonAttendance**: Attendance tracking
   - Status: ATTENDED / NO_SHOW
-  - `checked_by`: tracks which center member checked attendance
+  - `checked_by`: tracks which center staff checked attendance
   - `checked_at`: timestamp of attendance check
 
 ### Business Rules
-- Member must have APPROVED enrollment to book Lessons in that Season
+- Member (수강생) must have APPROVED enrollment to book Lessons in that Season
 - Member can book multiple Lessons simultaneously
-- Instructor can only manage seasons/lessons within their center(s)
-- Approved member can book any lesson in the season (regardless of instructor)
-- MVP: All center members have equal permissions (no role-based restrictions)
-- Center creation process: System Admin creates center → Admin invites instructors → Admin designates leader
+- Staff can only manage seasons/lessons within their center(s)
+- Approved member can book any lesson in the season (regardless of which staff created it)
+- MVP: All center staff have equal permissions (no role-based restrictions)
+- **Center creation & staff management**:
+  - System Admin creates center with representative designation
+  - Representative auto-added to equestrian_center_staff on center creation
+  - Representative invites users → Users approve/reject within 7 days
+  - Re-invitation allowed after rejection/expiration/withdrawal
+  - Cannot re-invite while INVITED status exists (prevent spam)
+  - Leave/expulsion supported, re-join creates new staff record
+  - Representative change: updates representative_user_id, previous representative remains as staff
 - No waitlist, no horse assignment, no level system (see docs/MEMO.md for future ideas)
 
 ### Capacity & Concurrency
@@ -125,9 +157,9 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
 - **D-2 or later**: No refund (cancellation allowed but tickets lost)
 - **Example**: Lesson on Jan 10 → Cancel by Jan 7 for refund
 
-### Lesson Cancellation by Instructor
-- When instructor cancels lesson (SCHEDULED → CANCELLED):
-  1. All RESERVED reservations → CANCELLED_BY_INSTRUCTOR
+### Lesson Cancellation by Staff
+- When staff cancels lesson (SCHEDULED → CANCELLED):
+  1. All RESERVED reservations → CANCELLED_BY_INSTRUCTOR (status name kept for compatibility)
   2. All affected members receive full ticket refund
   3. lesson.current_count reset to 0
 
@@ -178,15 +210,17 @@ dev.maldallija.maldallijabe
 │   │   └── service            # 유스케이스 구현
 │   └── domain                 # 도메인 모델
 ├── auth                       # Authentication domain
+├── administration             # Administration endpoints (system admin only)
 ├── equestriancenter           # Equestrian center domain
-│   └── member                 # InstructorGroupMember subdomain (future)
+│   ├── invitation             # EquestrianCenterInvitation subdomain
+│   └── staff                  # EquestrianCenterStaff subdomain
 ├── season
 │   ├── enrollment             # SeasonEnrollment subdomain
 │   ├── enrollmentlog          # SeasonEnrollmentLog subdomain
 │   └── ticketaccount          # SeasonTicketAccount subdomain
 ├── ticketlog
 ├── lesson
-│   ├── instructor             # LessonInstructor subdomain
+│   ├── instructor             # LessonInstructor subdomain (staff assignment)
 │   └── attendance             # LessonAttendance subdomain
 └── reservation
 ```
@@ -230,9 +264,12 @@ dev.maldallija.maldallijabe
 
 ## Related Documents
 
-- `docs/database.md` - DB schema design (14 tables: user, equestrian_center, instructor_group_member, authentication_access_session, authentication_refresh_session, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
+- `docs/database.md` - DB schema design (15 tables: user, equestrian_center, equestrian_center_invitation, equestrian_center_staff, authentication_access_session, authentication_refresh_session, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
   - Note: Originally specified "instructor_group" table, renamed to "equestrian_center" for clarity
+  - Note: Originally specified "leader_user_id", renamed to "representative_user_id" for clarity
+  - Note: Originally specified "instructor_group_member", renamed to "equestrian_center_staff" (staff = 강사, 매니저 등 모든 직원)
   - Note: Originally specified "token" table (1 day expiry), implemented as dual-session system (access 1h + refresh 30d)
+  - Note: Added equestrian_center_invitation table for invitation system (log-style)
 - `docs/MEMO.md` - Future feature ideas (OAuth2, notifications, batch, role-based permissions, etc.)
 - `docs/MEMO2.md` - Role-based feature definitions + Development order (Phase 1~7)
 
@@ -253,14 +290,37 @@ dev.maldallija.maldallijabe
   - InvalidSessionException → 401 UNAUTHORIZED
   - Full hexagonal architecture compliance
 
-- **EquestrianCenter** (Phase 2) ⚠️ PARTIALLY COMPLETED
-  - EquestrianCenter - center creation ✅ COMPLETED
-    - POST /api/v1/equestrian-centers (System Admin only)
-    - Audit fields: createdBy, updatedBy
-    - Returns 201 Created with no body
-  - EquestrianCenter - center retrieval/update/delete ❌ NOT IMPLEMENTED
-  - InstructorGroupMember - member management (N:M user-center) ❌ NOT IMPLEMENTED
-  - MVP: All members have equal permissions (no role system)
+- **EquestrianCenter CRUD** (Phase 2A) ✅ COMPLETED
+  - CREATE: POST /api/v1/administration/equestrian-centers (System Admin only)
+  - READ List: GET /api/v1/equestrian-centers (Public, paginated)
+  - READ Detail: GET /api/v1/equestrian-centers/{uuid} (Public)
+  - UPDATE: PATCH /api/v1/equestrian-centers/{uuid} (Representative only)
+  - DELETE: Deferred (soft delete)
+  - Renamed "leader" → "representative" throughout codebase
+  - AuthenticationFilter allows only GET requests without auth
+
+- **EquestrianCenter Invitation System** (Phase 2B) ❌ NOT IMPLEMENTED
+  - EquestrianCenterInvitation domain/table designed (log-style)
+  - Invitation API endpoints not implemented:
+    - POST /api/v1/equestrian-centers/{centerUuid}/invitations (send invitation)
+    - GET /api/v1/equestrian-centers/{centerUuid}/invitations (list sent invitations)
+    - DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw)
+    - GET /api/v1/my/equestrian-center-invitations (received invitations)
+    - POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/approve
+    - POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/reject
+  - 7-day expiration logic (check at query time)
+  - Re-invitation policy enforcement
+
+- **EquestrianCenterStaff Management** (Phase 2C) ❌ NOT IMPLEMENTED
+  - EquestrianCenterStaff domain/table designed (join/leave history tracking)
+  - Staff management API endpoints not implemented:
+    - GET /api/v1/equestrian-centers/{centerUuid}/staff (list staff)
+    - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid} (expel)
+    - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/me (leave)
+    - GET /api/v1/my/equestrian-center-staff-memberships (my centers as staff)
+  - Leave/expulsion tracking (left_at, left_by, left_reason)
+  - MVP: All staff have equal permissions (no role system, instructor only)
+  - Post-MVP: role column (INSTRUCTOR, MANAGER, ADMIN)
 
 ### Not Implemented Yet
 - **Season + Enrollment** (Phase 3)
@@ -483,3 +543,159 @@ dev.maldallija.maldallijabe
 - Added createdBy, updatedBy fields to track who created/modified equestrian centers
 - Creator tracked on creation, updater tracked on future updates
 - Supports accountability and audit trail requirements
+
+### 2025-12-18: Phase 2A completion + Invitation system design (Phase 2B/2C)
+
+**EquestrianCenter CRUD completion (Phase 2A):**
+- **Architecture reorganization**:
+  - Moved administration endpoints from `equestriancenter/adapter/in/web` to `administration/adapter/in/web/equestriancenter`
+  - Separated access levels: `/api/v1/administration/*` (admin-only) vs `/api/v1/equestrian-centers` (public/authenticated)
+  - Renamed AdministrationAuthorizationFilter → AdministratorAuthorizationFilter for clarity
+  - Reorganized auth structure to match: `auth/adapter/in/web/auth/` with subdirectories (dto, constant)
+- **Naming changes**:
+  - "leader/센터장" → "representative/대표 사용자" throughout codebase (11 files)
+  - `leaderUserId` → `representativeUserId` in domain, `leader_user_id` → `representative_user_id` in DB
+  - Updated entity with `@Column(name = "representative_user_id")` for backward compatibility
+- **CRUD operations implemented**:
+  - CREATE: POST /api/v1/administration/equestrian-centers (System Admin only) ✅
+  - READ List: GET /api/v1/equestrian-centers (Public, paginated, deleted excluded) ✅
+  - READ Detail: GET /api/v1/equestrian-centers/{uuid} (Public, returns representativeUserUuid) ✅
+  - UPDATE: PATCH /api/v1/equestrian-centers/{uuid} (Representative only, name/description) ✅
+  - DELETE: Deferred (soft delete via deleted_at)
+- **AuthenticationFilter refinement**:
+  - Changed from allowing all `/equestrian-centers` to only GET requests without auth
+  - PATCH/POST/DELETE require authentication
+  - Uses `HttpMethod.GET.name()` for type-safe method checking
+- **API responses**:
+  - List: uuid, name, description (paginated)
+  - Detail: +representativeUserUuid, createdAt, updatedAt
+  - Update: 204 No Content
+- **Exception handling**:
+  - 404: EquestrianCenterNotFoundException (center not found or deleted)
+  - 403: UnauthorizedEquestrianCenterOperationException (not representative)
+
+**Invitation system design (Phase 2B - NOT IMPLEMENTED):**
+- **Table structure finalized**: Log-style equestrian_center_invitation table
+  - invitation_status enum: INVITED, APPROVED, REJECTED, EXPIRED, WITHDRAWN
+  - Columns: id, uuid, equestrian_center_id, user_id, invited_by, status, invited_at, responded_at, expires_at
+  - Separate from instructor_group_member (concerns separated: invitation process vs active membership)
+  - Multiple invitation records per user allowed (complete history preservation)
+- **Business rules defined**:
+  - Expiration: 7 days from invited_at, checked at query time (no batch job)
+  - Re-invitation: allowed after REJECTED/EXPIRED/WITHDRAWN, forbidden if INVITED exists
+  - Cancellation: representative can WITHDRAW invitation (INVITED → WITHDRAWN)
+  - Approval: INVITED → APPROVED, creates instructor_group_member record
+  - Rejection: INVITED → REJECTED
+- **API endpoints designed** (15 endpoints total):
+  - Send invitation: POST /api/v1/equestrian-centers/{centerUuid}/invitations
+  - List sent: GET /api/v1/equestrian-centers/{centerUuid}/invitations
+  - Withdraw: DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid}
+  - Received list: GET /api/v1/my/equestrian-center-invitations
+  - Approve: POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/approve
+  - Reject: POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/reject
+
+**Member management design (Phase 2C - NOT IMPLEMENTED):**
+- **Table structure finalized**: instructor_group_member with join/leave tracking
+  - member_left_reason enum: LEFT_VOLUNTARILY, EXPELLED
+  - Added columns: joined_at, left_at, left_by, left_reason
+  - Employment history preserved: new record created on re-join after leave
+  - UNIQUE INDEX on (equestrian_center_id, user_id) WHERE left_at IS NULL AND deleted_at IS NULL
+- **Business rules defined**:
+  - Representative auto-added to instructor_group_member on center creation
+  - Leave: member sets left_at (left_by = NULL, left_reason = LEFT_VOLUNTARILY)
+  - Expel: representative sets left_at, left_by, left_reason = EXPELLED
+  - Re-join after leave: creates new membership record (preserves history)
+  - Representative change: updates representative_user_id, previous representative stays as member
+- **API endpoints designed**:
+  - List members: GET /api/v1/equestrian-centers/{centerUuid}/members (visibility configurable by representative)
+  - Expel member: DELETE /api/v1/equestrian-centers/{centerUuid}/members/{memberUuid}
+  - Leave center: DELETE /api/v1/equestrian-centers/{centerUuid}/members/me
+  - My memberships: GET /api/v1/my/equestrian-center-memberships
+
+**Architecture decisions:**
+- **representative_user_id retained** (vs is_representative flag):
+  - Representative = legal/business owner (permanent designation)
+  - Post-MVP: Functional permissions separated via role_id
+  - Performance: no join needed for representative checks
+  - Simplicity: direct ID comparison for authorization
+- **Invitation log-style vs status update**:
+  - Chosen: Log-style (new record per invitation)
+  - Rationale: Complete audit trail, no separate invitation_log needed
+  - Trade-off: More records vs better history tracking
+- **Member table vs combined invitation+member**:
+  - Chosen: Separate tables (invitation vs active membership)
+  - Rationale: Concerns separation, cleaner queries, employment history tracking
+
+**Documentation updated:**
+- **database.md**:
+  - Added invitation_status, member_left_reason enums
+  - Added equestrian_center_invitation table (table #3)
+  - Updated instructor_group_member with join/leave fields (table #4)
+  - Updated indexes (representative_user_id, invitation indexes, member partial unique)
+  - Renumbered all tables (14 → 15 tables total)
+  - Updated ERD with invitation relationship
+- **CLAUDE.md**:
+  - Updated Domain Model (EquestrianCenterInvitation, InstructorGroupMember details)
+  - Updated Business Rules (center creation & membership flow)
+  - Updated Implementation Status (Phase 2A ✅, 2B/2C ❌)
+  - Added this development log entry
+- **Related Documents section**: Updated table count to 15
+
+**Files modified:**
+- EquestrianCenter domain/entity/controller (representative naming)
+- AuthenticationFilter (HttpMethod enum for GET-only bypass)
+- AdministratorAuthorizationFilter (renamed)
+- Auth controllers/DTOs (reorganized to auth/adapter/in/web/auth/)
+- All documentation files
+
+### 2025-12-18: Naming convention refinement (instructor_group_member → equestrian_center_staff)
+
+**Rationale: Future extensibility and clarity**
+- "Instructor" limits scope to teaching role only
+- "Staff" accommodates all employee roles (instructor, manager, admin, etc.)
+- Aligns with real-world equestrian center operations
+- No code changes yet (Phase 2B/2C not implemented) - documentation only
+
+**Naming convention established:**
+```
+Admin         - 서비스 운영자 (System Admin, is_system_admin=true)
+Representative - 승마장 대표 (equestrian_center.representative_user_id)
+Staff         - 승마장 직원 (equestrian_center_staff: 강사, 매니저 등)
+Member        - 시즌 참여자 (season_enrollment: 수강생)
+User          - 일반 사용자 (가입만 한 상태)
+```
+
+**Database changes:**
+- Table: `instructor_group_member` → `equestrian_center_staff`
+- Column: `lesson_instructor.instructor_group_member_id` → `staff_id`
+- Indexes: `idx_instructor_group_member_*` → `idx_staff_*`
+- All references in created_by, granted_by, checked_by updated
+
+**Documentation updated:**
+- **database.md**: All table/column names, ERD, indexes, descriptions
+- **CLAUDE.md**: Domain Model, Package Structure, Implementation Status, this log
+- **MEMO2.md**: Phase 2 descriptions and API endpoint names
+
+**API endpoint changes (designed, not yet implemented):**
+```
+Before: /api/v1/equestrian-centers/{uuid}/members
+After:  /api/v1/equestrian-centers/{uuid}/staff
+
+Before: /api/v1/my/equestrian-center-memberships
+After:  /api/v1/my/equestrian-center-staff-memberships
+```
+
+**Domain model changes:**
+```kotlin
+Before: InstructorGroupMember
+After:  EquestrianCenterStaff
+
+// MVP: All staff = instructor role
+// Post-MVP: role column (INSTRUCTOR, MANAGER, ADMIN)
+```
+
+**Complexity avoided:**
+- staff is collective noun (no plural form needed)
+- Staff vs Employee: staff chosen (more general, includes non-employees)
+- lesson_instructor table kept (role-specific: who teaches this lesson)
+- Distinction maintained: staff (employment) vs instructor (lesson role)

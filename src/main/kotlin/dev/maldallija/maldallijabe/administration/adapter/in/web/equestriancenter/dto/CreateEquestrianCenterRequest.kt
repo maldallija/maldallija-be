@@ -15,6 +15,6 @@ data class CreateEquestrianCenterRequest(
     @Schema(description = "승마장 설명", example = "서울 강남구에 위치한 승마 클럽입니다")
     val description: String?,
     @field:NotNull
-    @Schema(description = "센터장 사용자 UUID")
-    val leaderUserUuid: UUID,
+    @Schema(description = "대표 사용자 UUID")
+    val representativeUserUuid: UUID,
 )

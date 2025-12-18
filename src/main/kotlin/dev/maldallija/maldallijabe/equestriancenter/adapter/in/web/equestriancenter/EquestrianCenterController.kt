@@ -73,7 +73,7 @@ class EquestrianCenterController(
                 uuid = equestrianCenterDetail.uuid,
                 name = equestrianCenterDetail.name,
                 description = equestrianCenterDetail.description,
-                leaderUserUuid = equestrianCenterDetail.leaderUserUuid,
+                representativeUserUuid = equestrianCenterDetail.representativeUserUuid,
                 createdAt = equestrianCenterDetail.createdAt,
                 updatedAt = equestrianCenterDetail.updatedAt,
             )

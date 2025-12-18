@@ -13,9 +13,9 @@ data class EquestrianCenterDetailResponse(
     @Schema(description = "승마장 설명")
     val description: String?,
     @Schema(description = "승마장 대표 사용자 UUID")
-    val leaderUserUuid: UUID,
-    @Schema(description = "생성일")
+    val representativeUserUuid: UUID,
+    @Schema(description = "생성일시")
     val createdAt: Instant,
-    @Schema(description = "수정일")
+    @Schema(description = "수정일시")
     val updatedAt: Instant,
 )

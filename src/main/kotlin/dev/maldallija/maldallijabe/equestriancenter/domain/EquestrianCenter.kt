@@ -8,7 +8,7 @@ data class EquestrianCenter(
     val uuid: UUID,
     val name: String,
     val description: String?,
-    val leaderUserId: Long,
+    val representativeUserId: Long,
     val createdBy: Long,
     val createdAt: Instant,
     val updatedBy: Long,

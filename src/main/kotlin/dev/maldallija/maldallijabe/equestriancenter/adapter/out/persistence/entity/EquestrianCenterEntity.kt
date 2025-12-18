@@ -21,8 +21,8 @@ class EquestrianCenterEntity(
     var name: String,
     @Column(columnDefinition = "TEXT")
     var description: String?,
-    @Column(nullable = false)
-    var leaderUserId: Long,
+    @Column(nullable = false, name = "representative_user_id")
+    var representativeUserId: Long,
     @Column(nullable = false, updatable = false)
     val createdBy: Long,
     @Column(nullable = false, updatable = false)

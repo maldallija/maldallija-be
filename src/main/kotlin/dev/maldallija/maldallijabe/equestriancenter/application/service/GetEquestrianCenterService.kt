@@ -21,15 +21,15 @@ class GetEquestrianCenterService(
             equestrianCenterRepository.findByUuid(equestrianCenterUuid)
                 ?: throw EquestrianCenterNotFoundException()
 
-        val leaderUser =
-            userRepository.findById(equestrianCenter.leaderUserId)
+        val representativeUser =
+            userRepository.findById(equestrianCenter.representativeUserId)
                 ?: throw UserNotFoundException()
 
         return EquestrianCenterDetail(
             uuid = equestrianCenter.uuid,
             name = equestrianCenter.name,
             description = equestrianCenter.description,
-            leaderUserUuid = leaderUser.uuid,
+            representativeUserUuid = representativeUser.uuid,
             createdAt = equestrianCenter.createdAt,
             updatedAt = equestrianCenter.updatedAt,
         )

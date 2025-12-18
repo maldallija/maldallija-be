@@ -20,10 +20,10 @@ class CreateEquestrianCenterService(
         administratorId: Long,
         name: String,
         description: String?,
-        leaderUserUuid: UUID,
+        representativeUserUuid: UUID,
     ) {
-        val leaderUser =
-            userRepository.findByUuid(leaderUserUuid)
+        val representativeUser =
+            userRepository.findByUuid(representativeUserUuid)
                 ?: throw UserNotFoundException()
 
         val now = Instant.now()
@@ -34,7 +34,7 @@ class CreateEquestrianCenterService(
                 uuid = UUID.randomUUID(),
                 name = name,
                 description = description,
-                leaderUserId = leaderUser.id,
+                representativeUserId = representativeUser.id,
                 createdBy = administratorId,
                 createdAt = now,
                 updatedBy = administratorId,

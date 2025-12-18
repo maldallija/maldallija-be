@@ -7,6 +7,6 @@ interface CreateEquestrianCenterUseCase {
         administratorId: Long,
         name: String,
         description: String?,
-        leaderUserUuid: UUID,
+        representativeUserUuid: UUID,
     )
 }

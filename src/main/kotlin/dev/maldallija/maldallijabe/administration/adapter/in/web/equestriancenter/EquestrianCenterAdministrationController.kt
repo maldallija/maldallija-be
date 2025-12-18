@@ -42,7 +42,7 @@ class EquestrianCenterAdministrationController(
             ),
             ApiResponse(
                 responseCode = "404",
-                description = "센터장 사용자를 찾을 수 없음",
+                description = "대표 사용자를 찾을 수 없음",
                 content = [Content(schema = Schema(implementation = ErrorResponse::class))],
             ),
         ],
@@ -56,7 +56,7 @@ class EquestrianCenterAdministrationController(
             administratorId = administratorId,
             name = request.name,
             description = request.description,
-            leaderUserUuid = request.leaderUserUuid,
+            representativeUserUuid = request.representativeUserUuid,
         )
 
         return ResponseEntity.status(HttpStatus.CREATED).build()

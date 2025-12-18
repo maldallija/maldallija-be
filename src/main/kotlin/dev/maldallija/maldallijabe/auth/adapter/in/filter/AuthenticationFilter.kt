@@ -8,6 +8,7 @@ import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
@@ -56,7 +57,7 @@ class AuthenticationFilter(
         return path.startsWith("/api/v1/auth/sign-in") ||
             path.startsWith("/api/v1/auth/sign-up") ||
             path.startsWith("/api/v1/auth/sessions/refresh") ||
-            path.startsWith("/api/v1/equestrian-centers") ||
+            (path.startsWith("/api/v1/equestrian-centers") && request.method == HttpMethod.GET.name()) ||
             path.startsWith("/swagger-ui") ||
             path.startsWith("/v3/api-docs")
     }

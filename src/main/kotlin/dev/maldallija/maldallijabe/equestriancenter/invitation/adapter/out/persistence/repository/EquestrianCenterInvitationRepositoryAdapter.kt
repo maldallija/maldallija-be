@@ -42,6 +42,18 @@ class EquestrianCenterInvitationRepositoryAdapter(
                 pageable = pageable,
             ).map { equestrianCenterInvitationMapper.toDomain(it) }
 
+    override fun findByUserIdAndOptionalStatus(
+        userId: Long,
+        status: InvitationStatus?,
+        pageable: Pageable,
+    ): Page<EquestrianCenterInvitation> =
+        equestrianCenterInvitationJpaRepository
+            .findByUserIdAndOptionalStatus(
+                userId = userId,
+                status = status,
+                pageable = pageable,
+            ).map { equestrianCenterInvitationMapper.toDomain(it) }
+
     override fun save(equestrianCenterInvitation: EquestrianCenterInvitation): EquestrianCenterInvitation {
         val entity = equestrianCenterInvitationMapper.toEntity(equestrianCenterInvitation)
         val savedEntity = equestrianCenterInvitationJpaRepository.save(entity)

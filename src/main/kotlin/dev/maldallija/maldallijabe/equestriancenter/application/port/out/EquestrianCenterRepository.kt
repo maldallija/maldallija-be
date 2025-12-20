@@ -10,5 +10,7 @@ interface EquestrianCenterRepository {
 
     fun findByUuid(uuid: UUID): EquestrianCenter?
 
+    fun findAllByIdIn(ids: List<Long>): List<EquestrianCenter>
+
     fun save(equestrianCenter: EquestrianCenter): EquestrianCenter
 }

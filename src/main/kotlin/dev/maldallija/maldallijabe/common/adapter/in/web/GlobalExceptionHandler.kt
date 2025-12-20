@@ -6,6 +6,7 @@ import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianC
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.exception.EquestrianCenterInvitationException
+import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
 import org.springframework.dao.DataIntegrityViolationException
@@ -25,6 +26,18 @@ class GlobalExceptionHandler {
             )
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(UnauthorizedUserOperationException::class)
+    fun handleUnauthorizedUserOperationException(e: UnauthorizedUserOperationException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Forbidden",
+            )
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
             .body(errorResponse)
     }
 

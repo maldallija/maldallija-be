@@ -10,4 +10,6 @@ interface EquestrianCenterJpaRepository : JpaRepository<EquestrianCenterEntity, 
     fun findByUuidAndDeletedAtIsNull(uuid: UUID): EquestrianCenterEntity?
 
     fun findAllByDeletedAtIsNull(pageable: Pageable): Page<EquestrianCenterEntity>
+
+    fun findAllByIdInAndDeletedAtIsNull(ids: List<Long>): List<EquestrianCenterEntity>
 }

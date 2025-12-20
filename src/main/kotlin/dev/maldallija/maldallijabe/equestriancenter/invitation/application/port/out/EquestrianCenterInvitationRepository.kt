@@ -21,5 +21,11 @@ interface EquestrianCenterInvitationRepository {
         pageable: Pageable,
     ): Page<EquestrianCenterInvitation>
 
+    fun findByUserIdAndOptionalStatus(
+        userId: Long,
+        status: InvitationStatus?,
+        pageable: Pageable,
+    ): Page<EquestrianCenterInvitation>
+
     fun save(equestrianCenterInvitation: EquestrianCenterInvitation): EquestrianCenterInvitation
 }

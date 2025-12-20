@@ -29,4 +29,17 @@ interface EquestrianCenterInvitationJpaRepository : JpaRepository<EquestrianCent
         status: InvitationStatus?,
         pageable: Pageable,
     ): Page<EquestrianCenterInvitationEntity>
+
+    @Query(
+        """
+        SELECT e FROM EquestrianCenterInvitationEntity e
+        WHERE e.userId = :userId
+        AND (:status IS NULL OR e.status = :status)
+        """,
+    )
+    fun findByUserIdAndOptionalStatus(
+        userId: Long,
+        status: InvitationStatus?,
+        pageable: Pageable,
+    ): Page<EquestrianCenterInvitationEntity>
 }

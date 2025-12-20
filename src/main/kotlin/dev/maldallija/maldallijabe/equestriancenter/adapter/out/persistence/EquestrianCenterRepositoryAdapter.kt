@@ -24,6 +24,11 @@ class EquestrianCenterRepositoryAdapter(
             equestrianCenterMapper.toDomain(it)
         }
 
+    override fun findAllByIdIn(ids: List<Long>): List<EquestrianCenter> =
+        equestrianCenterJpaRepository.findAllByIdInAndDeletedAtIsNull(ids).map {
+            equestrianCenterMapper.toDomain(it)
+        }
+
     override fun save(equestrianCenter: EquestrianCenter): EquestrianCenter {
         val entity = equestrianCenterMapper.toEntity(equestrianCenter)
         val savedEntity = equestrianCenterJpaRepository.save(entity)

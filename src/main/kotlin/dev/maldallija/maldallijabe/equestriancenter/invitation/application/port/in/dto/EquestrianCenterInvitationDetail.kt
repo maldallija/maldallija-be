@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`
+package dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.dto
 
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.InvitationStatus
 import java.time.Instant
@@ -8,7 +8,7 @@ data class EquestrianCenterInvitationDetail(
     val invitationUuid: UUID,
     val invitedUserUuid: UUID,
     val invitedUserNickname: String,
-    val status: InvitationStatus,
+    val invitationStatus: InvitationStatus,
     val invitedAt: Instant,
     val expiresAt: Instant,
     val respondedAt: Instant?,

@@ -12,11 +12,11 @@ data class EquestrianCenterInvitationListResponse(
     @Schema(description = "초대받은 사용자 정보")
     val invitedUser: InvitedUserResponse,
     @Schema(description = "초대 상태")
-    val status: InvitationStatus,
+    val invitationStatus: InvitationStatus,
     @Schema(description = "초대일시")
     val invitedAt: Instant,
     @Schema(description = "만료일시")
     val expiresAt: Instant,
-    @Schema(description = "응답 시각 (승인/거절 시)")
+    @Schema(description = "응답 일시 (승인/거절 시)")
     val respondedAt: Instant?,
 )

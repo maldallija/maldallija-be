@@ -47,9 +47,13 @@ class GetUserEquestrianCenterInvitationsService(
         // 4. 승마장 정보 한 번에 조회 (N+1 방지)
         val equestrianCenterIds = invitations.content.map { it.equestrianCenterId }
         val equestrianCenters =
-            equestrianCenterRepository
-                .findAllByIdIn(equestrianCenterIds)
-                .associateBy { it.id }
+            if (equestrianCenterIds.isEmpty()) {
+                emptyMap()
+            } else {
+                equestrianCenterRepository
+                    .findAllByIdIn(equestrianCenterIds)
+                    .associateBy { it.id }
+            }
 
         // 5. 초대 정보와 승마장 정보 매핑
         return invitations.map { invitation ->

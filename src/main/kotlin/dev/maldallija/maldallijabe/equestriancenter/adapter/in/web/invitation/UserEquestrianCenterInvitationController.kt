@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
-@Tag(name = "User - EquestrianCenter Invitation", description = "사용자 승마장 직원 초대 API")
+@Tag(name = "User - EquestrianCenter Invitation", description = "받은 초대 관리 API")
 @RestController
 @RequestMapping("/api/v1/users")
 class UserEquestrianCenterInvitationController(

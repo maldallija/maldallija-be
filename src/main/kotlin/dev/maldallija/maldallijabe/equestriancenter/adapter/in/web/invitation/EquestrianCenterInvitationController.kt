@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
-@Tag(name = "EquestrianCenter - Invitation", description = "승마장 직원 초대 API")
+@Tag(name = "EquestrianCenter - Invitation", description = "승마장 직원 초대 관리 API")
 @RestController
 @RequestMapping("/api/v1/equestrian-centers")
 class EquestrianCenterInvitationController(
@@ -83,7 +83,7 @@ class EquestrianCenterInvitationController(
                             uuid = invitation.invitedUserUuid,
                             nickname = invitation.invitedUserNickname,
                         ),
-                    status = invitation.status,
+                    invitationStatus = invitation.invitationStatus,
                     invitedAt = invitation.invitedAt,
                     expiresAt = invitation.expiresAt,
                     respondedAt = invitation.respondedAt,

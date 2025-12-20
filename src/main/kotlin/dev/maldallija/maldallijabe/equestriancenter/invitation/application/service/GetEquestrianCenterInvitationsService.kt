@@ -3,8 +3,8 @@ package dev.maldallija.maldallijabe.equestriancenter.invitation.application.serv
 import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
-import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.EquestrianCenterInvitationDetail
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.GetEquestrianCenterInvitationsUseCase
+import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.dto.EquestrianCenterInvitationDetail
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.out.EquestrianCenterInvitationRepository
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.InvitationStatus
 import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
@@ -49,9 +49,13 @@ class GetEquestrianCenterInvitationsService(
         // 4. 초대받은 사용자 정보 한 번에 조회 (N+1 방지)
         val userIds = invitations.content.map { it.userId }
         val users =
-            userRepository
-                .findAllByIdIn(userIds)
-                .associateBy { it.id }
+            if (userIds.isEmpty()) {
+                emptyMap()
+            } else {
+                userRepository
+                    .findAllByIdIn(userIds)
+                    .associateBy { it.id }
+            }
 
         // 5. 초대 정보와 사용자 정보 매핑
         return invitations.map { invitation ->
@@ -61,7 +65,7 @@ class GetEquestrianCenterInvitationsService(
                 invitationUuid = invitation.uuid,
                 invitedUserUuid = invitedUser.uuid,
                 invitedUserNickname = invitedUser.nickname,
-                status = invitation.status,
+                invitationStatus = invitation.status,
                 invitedAt = invitation.invitedAt,
                 expiresAt = invitation.expiresAt,
                 respondedAt = invitation.respondedAt,

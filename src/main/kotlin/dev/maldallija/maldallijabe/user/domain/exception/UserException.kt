@@ -1,6 +1,11 @@
 package dev.maldallija.maldallijabe.user.domain.exception
 
-abstract class UserException(
-    val errorCode: String,
+import dev.maldallija.maldallijabe.common.domain.exception.BaseException
+
+sealed class UserException(
+    errorCode: String,
     message: String,
-) : RuntimeException(message)
+) : BaseException(
+        errorCode = errorCode,
+        message = message,
+    )

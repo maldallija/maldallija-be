@@ -1,6 +1,11 @@
 package dev.maldallija.maldallijabe.equestriancenter.domain.exception
 
-abstract class EquestrianCenterException(
-    val errorCode: String,
+import dev.maldallija.maldallijabe.common.domain.exception.BaseException
+
+sealed class EquestrianCenterException(
+    errorCode: String,
     message: String,
-) : RuntimeException(message)
+) : BaseException(
+        errorCode = errorCode,
+        message = message,
+    )

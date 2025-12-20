@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 interface EquestrianCenterJpaRepository : JpaRepository<EquestrianCenterEntity, Long> {
-    fun findAllByDeletedAtIsNull(pageable: Pageable): Page<EquestrianCenterEntity>
-
     fun findByUuidAndDeletedAtIsNull(uuid: UUID): EquestrianCenterEntity?
+
+    fun findAllByDeletedAtIsNull(pageable: Pageable): Page<EquestrianCenterEntity>
 }

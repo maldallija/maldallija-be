@@ -7,6 +7,7 @@ import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.Invitation
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 @Repository
 class EquestrianCenterInvitationRepositoryAdapter(
@@ -23,6 +24,11 @@ class EquestrianCenterInvitationRepositoryAdapter(
             userId = userId,
             status = status,
         )
+
+    override fun findByUuid(uuid: UUID): EquestrianCenterInvitation? =
+        equestrianCenterInvitationJpaRepository.findByUuid(uuid)?.let {
+            equestrianCenterInvitationMapper.toDomain(it)
+        }
 
     override fun findByEquestrianCenterIdAndOptionalStatus(
         equestrianCenterId: Long,

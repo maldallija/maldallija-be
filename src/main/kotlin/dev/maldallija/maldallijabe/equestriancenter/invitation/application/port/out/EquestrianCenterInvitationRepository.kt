@@ -4,6 +4,7 @@ import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.Equestrian
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.InvitationStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import java.util.UUID
 
 interface EquestrianCenterInvitationRepository {
     fun existsByEquestrianCenterIdAndUserIdAndStatus(
@@ -11,6 +12,8 @@ interface EquestrianCenterInvitationRepository {
         userId: Long,
         status: InvitationStatus,
     ): Boolean
+
+    fun findByUuid(uuid: UUID): EquestrianCenterInvitation?
 
     fun findByEquestrianCenterIdAndOptionalStatus(
         equestrianCenterId: Long,

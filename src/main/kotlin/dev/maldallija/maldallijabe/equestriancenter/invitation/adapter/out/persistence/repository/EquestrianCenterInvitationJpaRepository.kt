@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.util.UUID
 
 interface EquestrianCenterInvitationJpaRepository : JpaRepository<EquestrianCenterInvitationEntity, Long> {
     fun existsByEquestrianCenterIdAndUserIdAndStatus(
@@ -13,6 +14,8 @@ interface EquestrianCenterInvitationJpaRepository : JpaRepository<EquestrianCent
         userId: Long,
         status: InvitationStatus,
     ): Boolean
+
+    fun findByUuid(uuid: UUID): EquestrianCenterInvitationEntity?
 
     @Query(
         """

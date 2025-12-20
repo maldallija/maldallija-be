@@ -4,6 +4,8 @@ import dev.maldallija.maldallijabe.equestriancenter.invitation.adapter.out.persi
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.out.EquestrianCenterInvitationRepository
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.EquestrianCenterInvitation
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.InvitationStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -21,6 +23,18 @@ class EquestrianCenterInvitationRepositoryAdapter(
             userId = userId,
             status = status,
         )
+
+    override fun findByEquestrianCenterIdAndOptionalStatus(
+        equestrianCenterId: Long,
+        status: InvitationStatus?,
+        pageable: Pageable,
+    ): Page<EquestrianCenterInvitation> =
+        equestrianCenterInvitationJpaRepository
+            .findByEquestrianCenterIdAndOptionalStatus(
+                equestrianCenterId = equestrianCenterId,
+                status = status,
+                pageable = pageable,
+            ).map { equestrianCenterInvitationMapper.toDomain(it) }
 
     override fun save(equestrianCenterInvitation: EquestrianCenterInvitation): EquestrianCenterInvitation {
         val entity = equestrianCenterInvitationMapper.toEntity(equestrianCenterInvitation)

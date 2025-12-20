@@ -8,6 +8,8 @@ interface UserRepository {
 
     fun findById(id: Long): User?
 
+    fun findAllByIdIn(ids: List<Long>): List<User>
+
     fun findByUuid(uuid: UUID): User?
 
     fun findByUsername(username: String): User?

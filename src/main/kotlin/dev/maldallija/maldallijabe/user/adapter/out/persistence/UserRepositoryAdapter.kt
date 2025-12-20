@@ -19,6 +19,8 @@ class UserRepositoryAdapter(
             userMapper.toDomain(it)
         }
 
+    override fun findAllByIdIn(ids: List<Long>): List<User> = userJpaRepository.findAllByIdIn(ids).map { userMapper.toDomain(it) }
+
     override fun findByUuid(uuid: UUID): User? =
         userJpaRepository.findByUuid(uuid)?.let {
             userMapper.toDomain(it)

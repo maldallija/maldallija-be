@@ -61,7 +61,7 @@ class GetUserEquestrianCenterInvitationsService(
                 invitationUuid = invitation.uuid,
                 equestrianCenterUuid = equestrianCenter.uuid,
                 equestrianCenterName = equestrianCenter.name,
-                status = invitation.status,
+                invitationStatus = invitation.status,
                 invitedAt = invitation.invitedAt,
                 expiresAt = invitation.expiresAt,
                 respondedAt = invitation.respondedAt,

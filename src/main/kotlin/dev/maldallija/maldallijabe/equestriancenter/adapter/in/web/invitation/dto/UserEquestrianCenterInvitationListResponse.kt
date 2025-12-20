@@ -12,7 +12,7 @@ data class UserEquestrianCenterInvitationListResponse(
     @Schema(description = "승마장 정보")
     val equestrianCenter: InvitingEquestrianCenterResponse,
     @Schema(description = "초대 상태")
-    val status: InvitationStatus,
+    val invitationStatus: InvitationStatus,
     @Schema(description = "초대 일시")
     val invitedAt: Instant,
     @Schema(description = "만료 일시")

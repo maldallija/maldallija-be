@@ -73,7 +73,7 @@ class UserEquestrianCenterInvitationController(
                             uuid = invitation.equestrianCenterUuid,
                             name = invitation.equestrianCenterName,
                         ),
-                    status = invitation.status,
+                    invitationStatus = invitation.invitationStatus,
                     invitedAt = invitation.invitedAt,
                     expiresAt = invitation.expiresAt,
                     respondedAt = invitation.respondedAt,

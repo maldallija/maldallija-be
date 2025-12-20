@@ -18,18 +18,18 @@ class EquestrianCenterEntity(
     @Column(nullable = false, unique = true)
     val uuid: UUID,
     @Column(nullable = false, length = 128)
-    var name: String,
+    val name: String,
     @Column(columnDefinition = "TEXT")
-    var description: String?,
+    val description: String?,
     @Column(nullable = false, name = "representative_user_id")
-    var representativeUserId: Long,
-    @Column(nullable = false, updatable = false)
+    val representativeUserId: Long,
+    @Column(nullable = false)
     val createdBy: Long,
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     val createdAt: Instant,
     @Column(nullable = false)
-    var updatedBy: Long,
+    val updatedBy: Long,
     @Column(nullable = false)
-    var updatedAt: Instant,
-    var deletedAt: Instant?,
+    val updatedAt: Instant,
+    val deletedAt: Instant?,
 )

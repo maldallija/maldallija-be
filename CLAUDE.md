@@ -48,6 +48,32 @@ Spring Boot 3.5.8 application written in Kotlin, using Gradle (Kotlin DSL) as th
 
 The project uses `allOpen` plugin for JPA entities - classes annotated with `@Entity`, `@MappedSuperclass`, or `@Embeddable` are automatically open for proxying.
 
+### Entity Immutability Policy
+
+**All Entity fields must be immutable (`val`)**:
+- NO JPA dirty checking - explicit save required for updates
+- Update pattern: Create new Entity instance with modified fields, then save
+- Benefits:
+  - Prevents accidental `updatedAt`/`updatedBy` omission
+  - Clearer update semantics
+  - Functional programming style
+- Example:
+  ```kotlin
+  @Entity
+  class UserEntity(
+      @Id val id: Long,
+      val username: String,
+      val updatedAt: Instant,  // All fields are val
+  )
+
+  // Update: create new instance
+  val updated = entity.copy(
+      username = newUsername,
+      updatedAt = Instant.now(),
+  )
+  repository.save(updated)
+  ```
+
 ## Domain Model
 
 ### Naming Convention (명명 체계)
@@ -699,3 +725,67 @@ After:  EquestrianCenterStaff
 - Staff vs Employee: staff chosen (more general, includes non-employees)
 - lesson_instructor table kept (role-specific: who teaches this lesson)
 - Distinction maintained: staff (employment) vs instructor (lesson role)
+
+### 2025-12-20: Entity immutability policy + Phase 2B invitation implementation
+
+**Entity immutability refactoring:**
+- **All Entity fields changed to `val` (immutable)**
+- **Removed all `updatable = false` annotations** (redundant with val)
+- **NO JPA dirty checking** - explicit save() required for all updates
+- **Update pattern**: Create new Entity instance → save()
+
+**Rationale:**
+- Prevents accidental `updatedAt`/`updatedBy` omission
+- Explicit update semantics (functional programming style)
+- Safer, more predictable code
+- Clearer audit trail management
+
+**Entities refactored:**
+- `UserEntity` - all fields now val
+- `EquestrianCenterEntity` - all fields now val
+- `EquestrianCenterInvitationEntity` - all fields now val
+- `EquestrianCenterStaffEntity` - all fields now val
+- `AuthenticationAccessSessionEntity` - all fields now val
+- `AuthenticationRefreshSessionEntity` - all fields now val
+
+**Database schema additions:**
+- Added `updated_by` column to `equestrian_center_invitation`
+- Added `updated_by` column to `equestrian_center_staff`
+- Added indexes: `idx_invitation_updated_by`, `idx_staff_updated_by`
+
+**Phase 2B: Invitation creation (POST) implemented:**
+- **API**: POST /api/v1/equestrian-centers/{equestrianCenterUuid}/invitations
+- **Request**: `{ userUuid: UUID }`
+- **Response**: 201 Created (no body)
+- **Authorization**: Representative only
+- **Validations**:
+  1. Center exists & not deleted
+  2. Requester is representative
+  3. Invited user exists & not deleted
+  4. Self-invitation prevented
+  5. Already active staff check
+  6. Duplicate INVITED status check
+  7. Invitation created with 7-day expiration
+
+**Exception hierarchy:**
+- `EquestrianCenterInvitationException` (abstract parent with errorCode)
+- `DuplicateInvitationException` - errorCode: "DUPLICATE_INVITATION"
+- `AlreadyStaffMemberException` - errorCode: "ALREADY_STAFF_MEMBER"
+- `SelfInvitationException` - errorCode: "SELF_INVITATION"
+
+**Files created:**
+- Domain: `EquestrianCenterInvitation`, `InvitationStatus` enum
+- Exceptions: 3 concrete + 1 abstract parent
+- UseCase: `CreateEquestrianCenterInvitationUseCase`
+- Service: `CreateEquestrianCenterInvitationService`
+- Repository: `EquestrianCenterInvitationRepository`, `EquestrianCenterStaffRepository` (minimal)
+- Entity: `EquestrianCenterInvitationEntity`, `EquestrianCenterStaffEntity` (partial)
+- Mapper: `EquestrianCenterInvitationMapper`
+- JPA: `EquestrianCenterInvitationJpaRepository`, `EquestrianCenterStaffJpaRepository`
+- Adapter: Repository adapters for both
+- Web: `EquestrianCenterInvitationController`, `CreateEquestrianCenterInvitationRequest`
+- GlobalExceptionHandler: Added `EquestrianCenterInvitationException` handler (400)
+
+**Documentation updated:**
+- **CLAUDE.md**: Added "Entity Immutability Policy" section under JPA Configuration
+- **database.md**: Added `updated_by` to invitation/staff tables + indexes

@@ -17,28 +17,28 @@ import java.util.UUID
 class EquestrianCenterInvitationEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = 0L,
+    val id: Long = 0L,
     @Column(nullable = false, unique = true)
-    var uuid: UUID,
+    val uuid: UUID,
     @Column(nullable = false, name = "equestrian_center_id")
-    var equestrianCenterId: Long,
+    val equestrianCenterId: Long,
     @Column(nullable = false, name = "user_id")
-    var userId: Long,
+    val userId: Long,
     @Column(nullable = false, name = "invited_by")
-    var invitedBy: Long,
+    val invitedBy: Long,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var status: InvitationStatus,
+    val status: InvitationStatus,
     @Column(nullable = false, name = "invited_at")
-    var invitedAt: Instant,
+    val invitedAt: Instant,
     @Column(name = "responded_at")
-    var respondedAt: Instant?,
+    val respondedAt: Instant?,
     @Column(nullable = false, name = "expires_at")
-    var expiresAt: Instant,
+    val expiresAt: Instant,
     @Column(nullable = false, name = "created_at")
-    var createdAt: Instant,
+    val createdAt: Instant,
     @Column(nullable = false, name = "updated_at")
-    var updatedAt: Instant,
+    val updatedAt: Instant,
     @Column(nullable = false, name = "updated_by")
-    var updatedBy: Long,
+    val updatedBy: Long,
 )

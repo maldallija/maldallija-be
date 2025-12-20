@@ -19,11 +19,11 @@ class AuthenticationAccessSessionEntity(
     val authenticationAccessSession: UUID,
     @Column(nullable = false)
     val userId: Long,
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     val createdAt: Instant,
     @Column(nullable = false)
-    var expiresAt: Instant,
-    var revokedAt: Instant?,
+    val expiresAt: Instant,
+    val revokedAt: Instant?,
     @Column(length = 64)
-    var revokedReason: String?,
+    val revokedReason: String?,
 )

@@ -18,16 +18,16 @@ class UserEntity(
     @Column(nullable = false, unique = true)
     val uuid: UUID,
     @Column(nullable = false, unique = true, length = 255)
-    var username: String,
+    val username: String,
     @Column(nullable = false, length = 60)
-    var password: String,
+    val password: String,
     @Column(nullable = false, length = 32)
-    var nickname: String,
+    val nickname: String,
     @Column(nullable = false)
-    var isSystemAdmin: Boolean,
-    @Column(nullable = false, updatable = false)
+    val isSystemAdmin: Boolean,
+    @Column(nullable = false)
     val createdAt: Instant,
     @Column(nullable = false)
-    var updatedAt: Instant,
-    var deletedAt: Instant?,
+    val updatedAt: Instant,
+    val deletedAt: Instant?,
 )

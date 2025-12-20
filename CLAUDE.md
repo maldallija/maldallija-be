@@ -288,6 +288,28 @@ dev.maldallija.maldallijabe
   )
   ```
 
+#### Exception Hierarchy
+- **3-tier structure**: `RuntimeException` → `BaseException` (abstract) → Domain Exception (sealed)
+- `BaseException`: Abstract class with `errorCode` and `message` fields
+- Domain Exceptions: Sealed classes for exhaustive type checking
+  - `UserException`, `AuthException`, `EquestrianCenterException`, `EquestrianCenterInvitationException`
+- Benefits:
+  - Compile-time exhaustive checking with sealed classes
+  - Centralized errorCode management
+  - Type-safe error handling in when expressions
+- Example:
+  ```kotlin
+  abstract class BaseException(
+      val errorCode: String,
+      message: String,
+  ) : RuntimeException(message)
+
+  sealed class UserException(
+      errorCode: String,
+      message: String,
+  ) : BaseException(errorCode, message)
+  ```
+
 ## Related Documents
 
 - `docs/database.md` - DB schema design (15 tables: user, equestrian_center, equestrian_center_invitation, equestrian_center_staff, authentication_access_session, authentication_refresh_session, season, season_enrollment, season_enrollment_log, season_ticket_account, ticket_log, lesson, lesson_instructor, reservation, lesson_attendance)
@@ -325,17 +347,19 @@ dev.maldallija.maldallijabe
   - Renamed "leader" → "representative" throughout codebase
   - AuthenticationFilter allows only GET requests without auth
 
-- **EquestrianCenter Invitation System** (Phase 2B) ❌ NOT IMPLEMENTED
-  - EquestrianCenterInvitation domain/table designed (log-style)
-  - Invitation API endpoints not implemented:
-    - POST /api/v1/equestrian-centers/{centerUuid}/invitations (send invitation)
-    - GET /api/v1/equestrian-centers/{centerUuid}/invitations (list sent invitations)
-    - DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw)
-    - GET /api/v1/my/equestrian-center-invitations (received invitations)
-    - POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/approve
-    - POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/reject
-  - 7-day expiration logic (check at query time)
-  - Re-invitation policy enforcement
+- **EquestrianCenter Invitation System** (Phase 2B) 🔄 IN PROGRESS (4/6 endpoints completed)
+  - EquestrianCenterInvitation domain/table implemented (log-style)
+  - Invitation API endpoints:
+    - ✅ POST /api/v1/equestrian-centers/{centerUuid}/invitations (send invitation)
+    - ✅ GET /api/v1/equestrian-centers/{centerUuid}/invitations (list sent invitations)
+    - ✅ DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw)
+    - ✅ GET /api/v1/users/{userUuid}/equestrian-center-invitations (received invitations)
+    - ❌ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve
+    - ❌ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject
+  - 7-day expiration logic (check at query time) ✅
+  - Re-invitation policy enforcement ✅
+  - N+1 prevention with batch fetching ✅
+  - Authorization: Representative for center endpoints, self-only for user endpoints ✅
 
 - **EquestrianCenterStaff Management** (Phase 2C) ❌ NOT IMPLEMENTED
   - EquestrianCenterStaff domain/table designed (join/leave history tracking)
@@ -789,3 +813,125 @@ After:  EquestrianCenterStaff
 **Documentation updated:**
 - **CLAUDE.md**: Added "Entity Immutability Policy" section under JPA Configuration
 - **database.md**: Added `updated_by` to invitation/staff tables + indexes
+
+### 2025-12-21: Exception hierarchy refactoring + Phase 2B continuation (4/6 completed)
+
+**Exception hierarchy refactoring:**
+- **Created `BaseException` abstract class**:
+  - Central exception with `errorCode` and `message` fields
+  - Extends `RuntimeException`
+  - Provides foundation for all domain exceptions
+- **Migrated all domain exceptions to sealed classes**:
+  - Changed from: `abstract class DomainException(...) : RuntimeException(message)`
+  - Changed to: `sealed class DomainException(...) : BaseException(errorCode, message)`
+  - Affected: `UserException`, `AuthException`, `EquestrianCenterException`, `EquestrianCenterInvitationException`
+- **Benefits**:
+  - Exhaustive type checking at compile-time (sealed classes)
+  - Centralized errorCode management via BaseException
+  - Type-safe error handling in when expressions
+  - Zero runtime overhead (compile-time only)
+- **Files modified**:
+  - `common/domain/exception/BaseException.kt` (created)
+  - `user/domain/exception/UserException.kt` (sealed + BaseException)
+  - `auth/domain/exception/AuthException.kt` (sealed + BaseException)
+  - `equestriancenter/domain/exception/EquestrianCenterException.kt` (sealed + BaseException)
+  - `equestriancenter/invitation/domain/exception/EquestrianCenterInvitationException.kt` (sealed + BaseException)
+
+**Phase 2B continuation - 4/6 invitation endpoints completed:**
+
+**Implemented endpoints:**
+1. ✅ GET /api/v1/equestrian-centers/{centerUuid}/invitations (sent invitations list)
+2. ✅ DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw invitation)
+3. ✅ GET /api/v1/users/{userUuid}/equestrian-center-invitations (received invitations list)
+
+**Remaining endpoints:**
+- POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve
+- POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject
+
+**Key implementation details:**
+
+**GET sent invitations (center perspective):**
+- UseCase: `GetEquestrianCenterInvitationsUseCase`
+- Service: `GetEquestrianCenterInvitationsService`
+- DTOs: `EquestrianCenterInvitationDetail`, `EquestrianCenterInvitationListResponse`, `InvitedUserResponse`
+- Authorization: Representative only
+- Filtering: Optional status parameter (INVITED, APPROVED, REJECTED, EXPIRED, WITHDRAWN)
+- Pagination: Default 20 per page, sorted by invitedAt DESC
+- N+1 Prevention: Batch fetch users with `findAllByIdIn()` + `associateBy()`
+- Response: invitationUuid, invitedUser{uuid, nickname}, invitationStatus, invitedAt, expiresAt, respondedAt
+
+**DELETE withdraw invitation:**
+- UseCase: `WithdrawEquestrianCenterInvitationUseCase`
+- Service: `WithdrawEquestrianCenterInvitationService`
+- Authorization: Representative only
+- Validation:
+  1. Center exists & not deleted
+  2. Requester is representative
+  3. Invitation exists & not deleted
+  4. Invitation belongs to this center
+  5. Only INVITED status can be withdrawn
+- Business logic: INVITED → WITHDRAWN with respondedAt timestamp
+- Response: 204 No Content
+- Exception: `InvalidInvitationStatusException` for non-INVITED withdrawals
+
+**GET received invitations (user perspective):**
+- UseCase: `GetUserEquestrianCenterInvitationsUseCase`
+- Service: `GetUserEquestrianCenterInvitationsService`
+- DTOs: `UserEquestrianCenterInvitationDetail`, `UserEquestrianCenterInvitationListResponse`, `InvitingEquestrianCenterResponse`
+- Authorization: 본인만 조회 가능 (self-only access)
+- API Path Pattern: `/api/v1/users/{userUuid}/*` instead of `/api/v1/my/*`
+  - Rationale: Consistency with future GET /api/v1/users/{userUuid} endpoint
+- Validation:
+  1. User lookup by UUID
+  2. Verify requestingUserId matches user.id
+  3. Throw `UnauthorizedUserOperationException` (403) if mismatch
+- Filtering: Optional status parameter
+- N+1 Prevention: Batch fetch equestrian centers with empty list check
+- Response: invitationUuid, equestrianCenter{uuid, name}, invitationStatus, invitedAt, expiresAt, respondedAt
+
+**Naming convention enforcement:**
+- **CRITICAL**: Changed all `status` fields to `invitationStatus` for full naming compliance
+- Applied to all DTOs: EquestrianCenterInvitationDetail, UserEquestrianCenterInvitationDetail, response DTOs
+- Swagger descriptions updated with proper Korean labels
+
+**Code quality improvements:**
+- Empty list check optimization: `if (ids.isEmpty()) emptyMap() else repository.findAllByIdIn(ids)`
+- Prevents unnecessary database queries when page is empty
+- Applied to both user and center batch fetching
+
+**Files created:**
+- UseCases: `GetEquestrianCenterInvitationsUseCase`, `WithdrawEquestrianCenterInvitationUseCase`, `GetUserEquestrianCenterInvitationsUseCase`
+- Services: `GetEquestrianCenterInvitationsService`, `WithdrawEquestrianCenterInvitationService`, `GetUserEquestrianCenterInvitationsService`
+- DTOs (application/port/in/dto):
+  - `EquestrianCenterInvitationDetail` (moved from root to dto/)
+  - `InvitedUserResponse`
+  - `UserEquestrianCenterInvitationDetail`
+  - `InvitingEquestrianCenterResponse`
+- Response DTOs (adapter/in/web):
+  - `EquestrianCenterInvitationListResponse`
+  - `UserEquestrianCenterInvitationListResponse`
+- Controllers:
+  - `EquestrianCenterInvitationController` (center endpoints)
+  - `UserEquestrianCenterInvitationController` (user endpoints, new file)
+- Exceptions:
+  - `InvalidInvitationStatusException` (cannot withdraw non-INVITED)
+  - `UnauthorizedUserOperationException` (user self-access check)
+- Repository methods:
+  - `EquestrianCenterInvitationRepository.findByEquestrianCenterIdAndOptionalStatus()`
+  - `EquestrianCenterInvitationRepository.findByUserIdAndOptionalStatus()`
+  - `EquestrianCenterRepository.findAllByIdIn()` (batch fetch)
+  - `UserRepository.findAllByIdIn()` (batch fetch)
+- GlobalExceptionHandler: Added `UnauthorizedUserOperationException` → 403 FORBIDDEN
+
+**Architecture compliance:**
+- Full hexagonal architecture maintained
+- DTOs properly organized in dto/ subdirectory
+- Batch fetching prevents N+1 queries
+- Authorization at service layer
+- Stateless immutable entities with .copy() updates
+
+**Documentation updated:**
+- **CLAUDE.md**:
+  - Current Implementation Status: Phase 2B progress (4/6 endpoints)
+  - Coding Standards: Added Exception Hierarchy section
+  - Development Log: This entry (2025-12-21)

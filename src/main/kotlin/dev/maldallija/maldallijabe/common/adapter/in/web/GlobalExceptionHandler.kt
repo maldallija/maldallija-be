@@ -5,6 +5,7 @@ import dev.maldallija.maldallijabe.auth.domain.exception.InsufficientPermissions
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
+import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.exception.EquestrianCenterInvitationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
 import org.springframework.dao.DataIntegrityViolationException
@@ -95,6 +96,18 @@ class GlobalExceptionHandler {
             ErrorResponse(
                 code = e.errorCode,
                 message = e.message ?: "Equestrian center error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(EquestrianCenterInvitationException::class)
+    fun handleEquestrianCenterInvitationException(e: EquestrianCenterInvitationException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Invitation error",
             )
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

@@ -121,6 +121,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | expires_at | TIMESTAMPTZ | NOT NULL | 만료 시각 (invited_at + 7일) |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
+| updated_by | BIGINT | NOT NULL | 최종 수정자 user.id 참조 |
 
 > - 로그형 테이블 - 같은 사용자에게 여러 초대 레코드 생성 가능 (재초대 이력 보존)
 > - 초대 만료: 7일 (배치 없이 조회 시점에 체크)
@@ -146,6 +147,7 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | left_reason | member_left_reason | | LEFT_VOLUNTARILY / EXPELLED |
 | created_at | TIMESTAMPTZ | NOT NULL | |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
+| updated_by | BIGINT | NOT NULL | 최종 수정자 user.id 참조 |
 | deleted_at | TIMESTAMPTZ | | soft delete (실수 복구용) |
 
 > - 승마장 직원 (staff) 관리: 강사, 매니저 등 모든 직원
@@ -390,6 +392,7 @@ CREATE INDEX idx_invitation_invited_by ON equestrian_center_invitation(invited_b
 CREATE INDEX idx_invitation_status ON equestrian_center_invitation(status);
 CREATE INDEX idx_invitation_user_center_status ON equestrian_center_invitation(user_id, equestrian_center_id, status);
 CREATE INDEX idx_invitation_expires_at ON equestrian_center_invitation(expires_at) WHERE status = 'INVITED';
+CREATE INDEX idx_invitation_updated_by ON equestrian_center_invitation(updated_by);
 
 -- equestrian_center_staff
 CREATE INDEX idx_staff_uuid ON equestrian_center_staff(uuid);
@@ -397,6 +400,7 @@ CREATE INDEX idx_staff_center_id ON equestrian_center_staff(equestrian_center_id
 CREATE INDEX idx_staff_user_id ON equestrian_center_staff(user_id);
 CREATE INDEX idx_staff_left_at ON equestrian_center_staff(left_at);
 CREATE INDEX idx_staff_left_by ON equestrian_center_staff(left_by);
+CREATE INDEX idx_staff_updated_by ON equestrian_center_staff(updated_by);
 CREATE INDEX idx_staff_deleted_at ON equestrian_center_staff(deleted_at);
 -- 부분 UNIQUE 인덱스: 활성 멤버 중복 방지 (탈퇴 후 재가입 가능)
 CREATE UNIQUE INDEX idx_staff_active_unique ON equestrian_center_staff(equestrian_center_id, user_id)

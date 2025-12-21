@@ -935,3 +935,79 @@ After:  EquestrianCenterStaff
   - Current Implementation Status: Phase 2B progress (4/6 endpoints)
   - Coding Standards: Added Exception Hierarchy section
   - Development Log: This entry (2025-12-21)
+
+### 2025-12-21: Filter exception handling refactoring - Spring Security standard pattern
+
+**Problem identified:**
+- Each filter had duplicate try-catch blocks for exception handling
+- AuthenticationFilter and AdministratorAuthorizationFilter manually called EntryPoint/Handler
+- Code duplication and maintenance burden
+- Violation of Single Responsibility Principle
+
+**Solution - Centralized exception handling filter:**
+- **Created `AuthExceptionHandlerFilter`**:
+  - Wraps entire filter chain in try-catch
+  - Catches `AuthenticationException` → delegates to `CustomAuthenticationEntryPoint` (401)
+  - Catches `AccessDeniedException` → delegates to `CustomAccessDeniedHandler` (403)
+  - Positioned before all auth filters in the chain
+- **Created `CustomAuthenticationEntryPoint`**:
+  - Implements Spring Security's `AuthenticationEntryPoint` interface
+  - Returns 401 UNAUTHORIZED with JSON error response
+  - Error code: "AUTHENTICATION_FAILED"
+- **Created `CustomAccessDeniedHandler`**:
+  - Implements Spring Security's `AccessDeniedHandler` interface
+  - Returns 403 FORBIDDEN with JSON error response
+  - Error code: "INSUFFICIENT_PERMISSIONS"
+
+**Filter refactoring:**
+- **AuthenticationFilter**:
+  - Removed try-catch blocks and EntryPoint injection
+  - Now only throws `SimpleAuthenticationException` (private inner class extending `AuthenticationException`)
+  - Added cause propagation to `SimpleAuthenticationException` for debugging
+  - Clean separation: authentication logic only, no exception handling
+- **AdministratorAuthorizationFilter**:
+  - Removed try-catch blocks and Handler injection
+  - Now only throws Spring Security's `AccessDeniedException`
+  - Clean separation: authorization logic only, no exception handling
+
+**SecurityConfig updates:**
+- Added `AuthExceptionHandlerFilter` to filter chain
+- Filter registration order fixed:
+  1. `authenticationFilter` (first registered to establish order)
+  2. `authExceptionHandlerFilter` (positioned before AuthenticationFilter)
+  3. `administratorAuthorizationFilter` (after AuthenticationFilter)
+- Final execution order: AuthExceptionHandlerFilter → AuthenticationFilter → AdministratorAuthorizationFilter
+- `.exceptionHandling()` configuration retained for Spring Security's built-in filters (defensive coding)
+
+**Code quality improvements:**
+- Removed 40+ lines of duplicated exception handling code
+- Single Responsibility: Each filter handles only its business logic
+- DRY principle: Exception handling centralized in one place
+- Extensibility: New auth filters automatically get exception handling
+- Debugging: Exception causes preserved via `SimpleAuthenticationException(message, cause)`
+
+**Technical details:**
+- `SimpleAuthenticationException` as private inner class (not exposed outside AuthenticationFilter)
+- Cause parameter added: `SimpleAuthenticationException(message: String, cause: Throwable? = null)`
+- Applied to UUID parsing and session validation failures
+- Filter chain DSL formatting improved (line break after `.exceptionHandling()`)
+
+**Files created:**
+- `AuthExceptionHandlerFilter.kt` - Central exception handling filter
+- `CustomAuthenticationEntryPoint.kt` - 401 response handler
+- `CustomAccessDeniedHandler.kt` - 403 response handler
+
+**Files modified:**
+- `AuthenticationFilter.kt` - Removed try-catch, added cause to SimpleAuthenticationException
+- `AdministratorAuthorizationFilter.kt` - Removed try-catch and Handler injection
+- `SecurityConfig.kt` - Added AuthExceptionHandlerFilter, fixed filter registration order
+
+**Benefits:**
+- **Maintainability**: Single place to modify exception handling behavior
+- **Consistency**: All auth filters follow same exception handling pattern
+- **Testability**: Exception handling logic isolated and testable
+- **Performance**: No overhead (exception handling happens only on errors)
+- **Standards compliance**: Follows Spring Security's ExceptionTranslationFilter pattern
+
+**Documentation updated:**
+- **CLAUDE.md**: This Development Log entry

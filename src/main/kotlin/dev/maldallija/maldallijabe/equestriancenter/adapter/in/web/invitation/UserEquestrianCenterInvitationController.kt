@@ -3,6 +3,7 @@ package dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web.invitation
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web.invitation.dto.InvitingEquestrianCenterResponse
 import dev.maldallija.maldallijabe.equestriancenter.adapter.`in`.web.invitation.dto.UserEquestrianCenterInvitationListResponse
+import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.ApproveEquestrianCenterInvitationUseCase
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.GetUserEquestrianCenterInvitationsUseCase
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.InvitationStatus
 import io.swagger.v3.oas.annotations.Operation
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -29,6 +31,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/users")
 class UserEquestrianCenterInvitationController(
     private val getUserEquestrianCenterInvitationsUseCase: GetUserEquestrianCenterInvitationsUseCase,
+    private val approveEquestrianCenterInvitationUseCase: ApproveEquestrianCenterInvitationUseCase,
 ) {
     @Operation(summary = "사용자가 받은 승마장 직원 초대 목록 조회")
     @ApiResponses(
@@ -81,5 +84,44 @@ class UserEquestrianCenterInvitationController(
             }
 
         return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "사용자가 받은 승마장 직원 초대 승인")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "204",
+                description = "승인 성공",
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "이미 응답한 초대 / 만료된 초대",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "초대받은 본인만 승인 가능",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "사용자를 찾을 수 없음 / 초대를 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PostMapping("/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve")
+    fun approveEquestrianCenterInvitation(
+        @PathVariable userUuid: UUID,
+        @PathVariable invitationUuid: UUID,
+        @AuthenticationPrincipal requestingUserId: Long,
+    ): ResponseEntity<Void> {
+        approveEquestrianCenterInvitationUseCase.approveEquestrianCenterInvitation(
+            userUuid = userUuid,
+            invitationUuid = invitationUuid,
+            actorUserId = requestingUserId,
+        )
+
+        return ResponseEntity.noContent().build()
     }
 }

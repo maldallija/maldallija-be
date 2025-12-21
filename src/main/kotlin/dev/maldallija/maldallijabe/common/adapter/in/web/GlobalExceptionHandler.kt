@@ -77,6 +77,14 @@ class GlobalExceptionHandler {
             .body(errorResponse)
     }
 
+    // 선택사항: 더 명시적으로 하려면 추가 (생략 가능)
+    // @ExceptionHandler(AuthenticationFailedException::class)
+    // fun handleAuthenticationFailedException(e: AuthenticationFailedException): ResponseEntity<ErrorResponse> {
+    //     return ResponseEntity
+    //         .status(HttpStatus.UNAUTHORIZED)
+    //         .body(ErrorResponse(code = e.errorCode, message = e.message ?: "Authentication failed"))
+    // }
+
     @ExceptionHandler(UnauthorizedEquestrianCenterOperationException::class)
     fun handleUnauthorizedEquestrianCenterOperationException(
         e: UnauthorizedEquestrianCenterOperationException,

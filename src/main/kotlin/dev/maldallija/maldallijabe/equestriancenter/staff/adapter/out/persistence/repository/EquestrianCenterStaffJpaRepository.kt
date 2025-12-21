@@ -4,12 +4,15 @@ import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistenc
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import java.util.UUID
 
 interface EquestrianCenterStaffJpaRepository : JpaRepository<EquestrianCenterStaffEntity, Long> {
     fun existsByEquestrianCenterIdAndUserIdAndLeftAtIsNull(
         equestrianCenterId: Long,
         userId: Long,
     ): Boolean
+
+    fun findByUuidAndDeletedAtIsNull(uuid: UUID): EquestrianCenterStaffEntity?
 
     fun findByEquestrianCenterIdAndLeftAtIsNullAndDeletedAtIsNull(
         equestrianCenterId: Long,

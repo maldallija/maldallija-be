@@ -11,7 +11,7 @@ data class EquestrianCenterStaff(
     val joinedAt: Instant,
     val leftAt: Instant?,
     val leftBy: Long?,
-    val leftReason: String?,
+    val leftReason: StaffLeftReason?,
     val createdAt: Instant,
     val updatedAt: Instant,
     val updatedBy: Long,

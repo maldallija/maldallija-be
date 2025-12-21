@@ -2,6 +2,7 @@ package dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persisten
 
 import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistence.entity.EquestrianCenterStaffEntity
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.EquestrianCenterStaff
+import dev.maldallija.maldallijabe.equestriancenter.staff.domain.StaffLeftReason
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,7 +16,7 @@ class EquestrianCenterStaffMapper {
             joinedAt = entity.joinedAt,
             leftAt = entity.leftAt,
             leftBy = entity.leftBy,
-            leftReason = entity.leftReason,
+            leftReason = entity.leftReason?.let { StaffLeftReason.valueOf(it) },
             createdAt = entity.createdAt,
             updatedAt = entity.updatedAt,
             updatedBy = entity.updatedBy,
@@ -30,7 +31,7 @@ class EquestrianCenterStaffMapper {
             joinedAt = domain.joinedAt,
             leftAt = domain.leftAt,
             leftBy = domain.leftBy,
-            leftReason = domain.leftReason,
+            leftReason = domain.leftReason?.name,
             createdAt = domain.createdAt,
             updatedAt = domain.updatedAt,
             updatedBy = domain.updatedBy,

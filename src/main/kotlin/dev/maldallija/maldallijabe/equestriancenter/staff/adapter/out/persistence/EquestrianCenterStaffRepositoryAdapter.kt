@@ -7,6 +7,7 @@ import dev.maldallija.maldallijabe.equestriancenter.staff.domain.EquestrianCente
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 @Repository
 class EquestrianCenterStaffRepositoryAdapter(
@@ -21,6 +22,11 @@ class EquestrianCenterStaffRepositoryAdapter(
             equestrianCenterId = equestrianCenterId,
             userId = userId,
         )
+
+    override fun findByUuid(uuid: UUID): EquestrianCenterStaff? =
+        equestrianCenterStaffJpaRepository
+            .findByUuidAndDeletedAtIsNull(uuid)
+            ?.let { equestrianCenterStaffMapper.toDomain(it) }
 
     override fun findByEquestrianCenterIdAndLeftAtIsNull(
         equestrianCenterId: Long,

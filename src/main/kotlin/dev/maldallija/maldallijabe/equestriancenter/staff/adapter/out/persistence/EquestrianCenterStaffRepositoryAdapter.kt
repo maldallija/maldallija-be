@@ -1,5 +1,6 @@
-package dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistence.repository
+package dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistence
 
+import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistence.repository.EquestrianCenterStaffJpaRepository
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
 import org.springframework.stereotype.Repository
 

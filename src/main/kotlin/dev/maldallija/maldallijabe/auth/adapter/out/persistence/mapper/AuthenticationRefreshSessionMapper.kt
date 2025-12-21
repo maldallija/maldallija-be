@@ -1,5 +1,6 @@
-package dev.maldallija.maldallijabe.auth.adapter.out.persistence
+package dev.maldallija.maldallijabe.auth.adapter.out.persistence.mapper
 
+import dev.maldallija.maldallijabe.auth.adapter.out.persistence.entity.AuthenticationRefreshSessionEntity
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationRefreshSession
 
 object AuthenticationRefreshSessionMapper {

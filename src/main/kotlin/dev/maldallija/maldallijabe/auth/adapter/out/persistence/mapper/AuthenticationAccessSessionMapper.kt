@@ -1,5 +1,6 @@
-package dev.maldallija.maldallijabe.auth.adapter.out.persistence
+package dev.maldallija.maldallijabe.auth.adapter.out.persistence.mapper
 
+import dev.maldallija.maldallijabe.auth.adapter.out.persistence.entity.AuthenticationAccessSessionEntity
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationAccessSession
 
 object AuthenticationAccessSessionMapper {

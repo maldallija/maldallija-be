@@ -1,5 +1,6 @@
-package dev.maldallija.maldallijabe.auth.adapter.out.persistence
+package dev.maldallija.maldallijabe.auth.adapter.out.persistence.repository
 
+import dev.maldallija.maldallijabe.auth.adapter.out.persistence.entity.AuthenticationRefreshSessionEntity
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -7,13 +8,13 @@ import org.springframework.data.repository.query.Param
 import java.time.Instant
 import java.util.UUID
 
-interface AuthenticationAccessSessionJpaRepository : JpaRepository<AuthenticationAccessSessionEntity, Long> {
-    fun findByAuthenticationAccessSession(authenticationAccessSession: UUID): AuthenticationAccessSessionEntity?
+interface AuthenticationRefreshSessionJpaRepository : JpaRepository<AuthenticationRefreshSessionEntity, Long> {
+    fun findByAuthenticationRefreshSession(authenticationRefreshSession: UUID): AuthenticationRefreshSessionEntity?
 
     @Modifying
     @Query(
         """
-        UPDATE AuthenticationAccessSessionEntity a
+        UPDATE AuthenticationRefreshSessionEntity a
         SET a.revokedAt = :revokedAt, a.revokedReason = :reason
         WHERE a.userId = :userId AND a.revokedAt IS NULL
         """,

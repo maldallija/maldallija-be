@@ -1,6 +1,7 @@
-package dev.maldallija.maldallijabe.equestriancenter.invitation.adapter.out.persistence.repository
+package dev.maldallija.maldallijabe.equestriancenter.invitation.adapter.out.persistence
 
 import dev.maldallija.maldallijabe.equestriancenter.invitation.adapter.out.persistence.mapper.EquestrianCenterInvitationMapper
+import dev.maldallija.maldallijabe.equestriancenter.invitation.adapter.out.persistence.repository.EquestrianCenterInvitationJpaRepository
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.out.EquestrianCenterInvitationRepository
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.EquestrianCenterInvitation
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.InvitationStatus

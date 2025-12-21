@@ -1,5 +1,7 @@
 package dev.maldallija.maldallijabe.auth.adapter.out.persistence
 
+import dev.maldallija.maldallijabe.auth.adapter.out.persistence.mapper.AuthenticationAccessSessionMapper
+import dev.maldallija.maldallijabe.auth.adapter.out.persistence.repository.AuthenticationAccessSessionJpaRepository
 import dev.maldallija.maldallijabe.auth.application.port.out.AuthenticationAccessSessionRepository
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationAccessSession
 import dev.maldallija.maldallijabe.auth.domain.AuthenticationSessionRevokedReason

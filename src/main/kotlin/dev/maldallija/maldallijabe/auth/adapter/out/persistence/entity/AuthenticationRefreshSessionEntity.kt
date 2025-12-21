@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.auth.adapter.out.persistence
+package dev.maldallija.maldallijabe.auth.adapter.out.persistence.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -10,13 +10,13 @@ import java.time.Instant
 import java.util.UUID
 
 @Entity
-@Table(name = "authentication_access_session")
-class AuthenticationAccessSessionEntity(
+@Table(name = "authentication_refresh_session")
+class AuthenticationRefreshSessionEntity(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long,
     @Column(nullable = false, unique = true)
-    val authenticationAccessSession: UUID,
+    val authenticationRefreshSession: UUID,
     @Column(nullable = false)
     val userId: Long,
     @Column(nullable = false)

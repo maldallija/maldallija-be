@@ -34,8 +34,8 @@ class SecurityConfig(
                 exception
                     .authenticationEntryPoint(customAuthenticationEntryPoint)
                     .accessDeniedHandler(customAccessDeniedHandler)
-            }.addFilterBefore(authExceptionHandlerFilter, AuthenticationFilter::class.java)
-            .addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            }.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(authExceptionHandlerFilter, AuthenticationFilter::class.java)
             .addFilterAfter(administratorAuthorizationFilter, AuthenticationFilter::class.java)
             .build()
 

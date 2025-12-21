@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.util.UUID
 
-data class UserEquestrianCenterStaffMembershipListResponse(
+data class UserEquestrianCenterStaffAffiliationListResponse(
     @Schema(description = "직원 UUID", example = "123e4567-e89b-12d3-a456-426614174000")
     val staffUuid: UUID,
     @Schema(description = "승마장 정보")

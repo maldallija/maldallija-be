@@ -1,8 +1,8 @@
 package dev.maldallija.maldallijabe.equestriancenter.staff.application.service
 
 import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
-import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.GetUserEquestrianCenterStaffMembershipsUseCase
-import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.dto.UserEquestrianCenterStaffMembershipDetail
+import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.GetUserEquestrianCenterStaffAffiliationsUseCase
+import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.dto.UserEquestrianCenterStaffAffiliationDetail
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
 import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
 import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
@@ -15,16 +15,16 @@ import java.util.UUID
 
 @Service
 @Transactional(readOnly = true)
-class GetUserEquestrianCenterStaffMembershipsService(
+class GetUserEquestrianCenterStaffAffiliationsService(
     private val userRepository: UserRepository,
     private val equestrianCenterStaffRepository: EquestrianCenterStaffRepository,
     private val equestrianCenterRepository: EquestrianCenterRepository,
-) : GetUserEquestrianCenterStaffMembershipsUseCase {
-    override fun getUserEquestrianCenterStaffMemberships(
+) : GetUserEquestrianCenterStaffAffiliationsUseCase {
+    override fun getUserEquestrianCenterStaffAffiliations(
         userUuid: UUID,
         requestingUserId: Long,
         pageable: Pageable,
-    ): Page<UserEquestrianCenterStaffMembershipDetail> {
+    ): Page<UserEquestrianCenterStaffAffiliationDetail> {
         // 1. User 존재 확인
         val user =
             userRepository.findByUuid(userUuid)
@@ -54,7 +54,7 @@ class GetUserEquestrianCenterStaffMembershipsService(
         // 5. DTO 변환
         return staffPage.map { staff ->
             val equestrianCenter = equestrianCentersById[staff.equestrianCenterId]!!
-            UserEquestrianCenterStaffMembershipDetail(
+            UserEquestrianCenterStaffAffiliationDetail(
                 staffUuid = staff.uuid,
                 equestrianCenterId = equestrianCenter.id,
                 equestrianCenterUuid = equestrianCenter.uuid,

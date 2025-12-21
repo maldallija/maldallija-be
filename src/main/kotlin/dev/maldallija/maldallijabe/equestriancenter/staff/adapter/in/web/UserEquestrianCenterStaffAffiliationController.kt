@@ -2,8 +2,8 @@ package dev.maldallija.maldallijabe.equestriancenter.staff.adapter.`in`.web
 
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.`in`.web.dto.StaffEquestrianCenterResponse
-import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.`in`.web.dto.UserEquestrianCenterStaffMembershipListResponse
-import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.GetUserEquestrianCenterStaffMembershipsUseCase
+import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.`in`.web.dto.UserEquestrianCenterStaffAffiliationListResponse
+import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.GetUserEquestrianCenterStaffAffiliationsUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
-@Tag(name = "User - EquestrianCenter Staff Membership", description = "사용자 승마장 직원 자격 API")
+@Tag(name = "User - EquestrianCenter Staff Affiliation", description = "사용자 승마장 직원 소속 API")
 @RestController
 @RequestMapping("/api/v1/users")
-class UserEquestrianCenterStaffMembershipController(
-    private val getUserEquestrianCenterStaffMembershipsUseCase: GetUserEquestrianCenterStaffMembershipsUseCase,
+class UserEquestrianCenterStaffAffiliationController(
+    private val getUserEquestrianCenterStaffAffiliationsUseCase: GetUserEquestrianCenterStaffAffiliationsUseCase,
 ) {
     @Operation(summary = "사용자가 직원으로 속한 승마장 목록 조회")
     @ApiResponses(
@@ -47,29 +47,29 @@ class UserEquestrianCenterStaffMembershipController(
             ),
         ],
     )
-    @GetMapping("/{userUuid}/equestrian-center-staff-memberships")
-    fun getUserEquestrianCenterStaffMemberships(
+    @GetMapping("/{userUuid}/equestrian-center-staff-affiliations")
+    fun getUserEquestrianCenterStaffAffiliations(
         @PathVariable userUuid: UUID,
         @AuthenticationPrincipal requestingUserId: Long,
         @PageableDefault(size = 20, sort = ["joinedAt"], direction = Sort.Direction.DESC) pageable: Pageable,
-    ): ResponseEntity<Page<UserEquestrianCenterStaffMembershipListResponse>> {
-        val membershipsPage =
-            getUserEquestrianCenterStaffMembershipsUseCase.getUserEquestrianCenterStaffMemberships(
+    ): ResponseEntity<Page<UserEquestrianCenterStaffAffiliationListResponse>> {
+        val affiliationsPage =
+            getUserEquestrianCenterStaffAffiliationsUseCase.getUserEquestrianCenterStaffAffiliations(
                 userUuid = userUuid,
                 requestingUserId = requestingUserId,
                 pageable = pageable,
             )
 
         val response =
-            membershipsPage.map { membership ->
-                UserEquestrianCenterStaffMembershipListResponse(
-                    staffUuid = membership.staffUuid,
+            affiliationsPage.map { affiliation ->
+                UserEquestrianCenterStaffAffiliationListResponse(
+                    staffUuid = affiliation.staffUuid,
                     equestrianCenter =
                         StaffEquestrianCenterResponse(
-                            uuid = membership.equestrianCenterUuid,
-                            name = membership.equestrianCenterName,
+                            uuid = affiliation.equestrianCenterUuid,
+                            name = affiliation.equestrianCenterName,
                         ),
-                    joinedAt = membership.joinedAt,
+                    joinedAt = affiliation.joinedAt,
                 )
             }
 

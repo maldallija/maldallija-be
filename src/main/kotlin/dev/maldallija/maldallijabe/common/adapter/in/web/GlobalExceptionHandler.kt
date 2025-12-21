@@ -8,6 +8,7 @@ import dev.maldallija.maldallijabe.equestriancenter.domain.exception.Unauthorize
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.exception.EquestrianCenterInvitationException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.EquestrianCenterStaffException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.StaffNotFoundException
+import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.UnauthorizedStaffOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
@@ -146,6 +147,18 @@ class GlobalExceptionHandler {
             )
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(UnauthorizedStaffOperationException::class)
+    fun handleUnauthorizedStaffOperationException(e: UnauthorizedStaffOperationException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Forbidden",
+            )
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
             .body(errorResponse)
     }
 

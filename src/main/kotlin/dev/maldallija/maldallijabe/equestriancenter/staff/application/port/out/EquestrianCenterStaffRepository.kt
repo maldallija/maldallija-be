@@ -18,5 +18,10 @@ interface EquestrianCenterStaffRepository {
         pageable: Pageable,
     ): Page<EquestrianCenterStaff>
 
+    fun findByUserIdAndLeftAtIsNull(
+        userId: Long,
+        pageable: Pageable,
+    ): Page<EquestrianCenterStaff>
+
     fun save(equestrianCenterStaff: EquestrianCenterStaff): EquestrianCenterStaff
 }

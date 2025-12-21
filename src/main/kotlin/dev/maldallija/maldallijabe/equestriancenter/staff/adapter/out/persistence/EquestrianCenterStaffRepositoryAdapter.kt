@@ -38,6 +38,16 @@ class EquestrianCenterStaffRepositoryAdapter(
                 pageable = pageable,
             ).map { equestrianCenterStaffMapper.toDomain(it) }
 
+    override fun findByUserIdAndLeftAtIsNull(
+        userId: Long,
+        pageable: Pageable,
+    ): Page<EquestrianCenterStaff> =
+        equestrianCenterStaffJpaRepository
+            .findByUserIdAndLeftAtIsNullAndDeletedAtIsNull(
+                userId = userId,
+                pageable = pageable,
+            ).map { equestrianCenterStaffMapper.toDomain(it) }
+
     override fun save(equestrianCenterStaff: EquestrianCenterStaff): EquestrianCenterStaff {
         val entity = equestrianCenterStaffMapper.toEntity(equestrianCenterStaff)
         val savedEntity = equestrianCenterStaffJpaRepository.save(entity)

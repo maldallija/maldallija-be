@@ -4,6 +4,8 @@ import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistenc
 import dev.maldallija.maldallijabe.equestriancenter.staff.adapter.out.persistence.repository.EquestrianCenterStaffJpaRepository
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.EquestrianCenterStaff
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
 @Repository
@@ -19,6 +21,16 @@ class EquestrianCenterStaffRepositoryAdapter(
             equestrianCenterId = equestrianCenterId,
             userId = userId,
         )
+
+    override fun findByEquestrianCenterIdAndLeftAtIsNull(
+        equestrianCenterId: Long,
+        pageable: Pageable,
+    ): Page<EquestrianCenterStaff> =
+        equestrianCenterStaffJpaRepository
+            .findByEquestrianCenterIdAndLeftAtIsNullAndDeletedAtIsNull(
+                equestrianCenterId = equestrianCenterId,
+                pageable = pageable,
+            ).map { equestrianCenterStaffMapper.toDomain(it) }
 
     override fun save(equestrianCenterStaff: EquestrianCenterStaff): EquestrianCenterStaff {
         val entity = equestrianCenterStaffMapper.toEntity(equestrianCenterStaff)

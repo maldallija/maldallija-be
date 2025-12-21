@@ -81,14 +81,14 @@
    - ❌ DELETE: 보류 (soft delete via deleted_at)
    - Renamed: leader → representative (11 files)
 
-### Phase 2B: Invitation System ❌ NOT IMPLEMENTED
+### Phase 2B: Invitation System ✅ COMPLETED
 4. **EquestrianCenterInvitation** - 초대 시스템 (로그형 테이블)
-   - POST /api/v1/equestrian-centers/{centerUuid}/invitations (초대 발송, 대표 전용)
-   - GET /api/v1/equestrian-centers/{centerUuid}/invitations (발송한 초대 목록)
-   - DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (초대 취소)
-   - GET /api/v1/my/equestrian-center-invitations (받은 초대 목록)
-   - POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/approve (승인)
-   - POST /api/v1/my/equestrian-center-invitations/{invitationUuid}/reject (거절)
+   - ✅ POST /api/v1/equestrian-centers/{centerUuid}/invitations (초대 발송, 대표 전용)
+   - ✅ GET /api/v1/equestrian-centers/{centerUuid}/invitations (발송한 초대 목록)
+   - ✅ DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (초대 취소)
+   - ✅ GET /api/v1/users/{userUuid}/equestrian-center-invitations (받은 초대 목록)
+   - ✅ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve (승인)
+   - ✅ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject (거절)
    - Status: INVITED → APPROVED/REJECTED/EXPIRED/WITHDRAWN
    - 7일 만료 (조회 시점 체크, 배치 없음)
    - 재초대 정책: REJECTED/EXPIRED/WITHDRAWN 후 가능, INVITED 중복 불가
@@ -96,9 +96,8 @@
 ### Phase 2C: Staff Management ❌ NOT IMPLEMENTED
 5. **EquestrianCenterStaff** - 직원 관리 (입퇴사 이력 추적)
    - GET /api/v1/equestrian-centers/{centerUuid}/staff (직원 목록, 공개 여부는 대표 설정)
-   - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid} (추방, 대표 전용)
-   - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/me (스스로 탈퇴)
-   - GET /api/v1/my/equestrian-center-staff-memberships (직원으로 속한 승마장 목록)
+   - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid} (추방/탈퇴: 대표면 추방, 본인이면 탈퇴)
+   - GET /api/v1/users/{userUuid}/equestrian-center-staff-memberships (직원으로 속한 승마장 목록)
    - joined_at, left_at, left_by, left_reason 추적
    - Leave reasons: LEFT_VOLUNTARILY, EXPELLED
    - 재가입 시 새 레코드 생성 (입퇴사 이력 보존)

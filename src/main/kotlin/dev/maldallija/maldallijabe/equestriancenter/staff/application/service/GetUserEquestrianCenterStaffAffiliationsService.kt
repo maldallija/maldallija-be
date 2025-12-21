@@ -1,6 +1,6 @@
 package dev.maldallija.maldallijabe.equestriancenter.staff.application.service
 
-import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
+import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.GetUserEquestrianCenterStaffAffiliationsUseCase
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.dto.UserEquestrianCenterStaffAffiliationDetail
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository

@@ -1,8 +1,8 @@
 package dev.maldallija.maldallijabe.equestriancenter.invitation.application.service
 
-import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
+import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.UnauthorizedEquestrianCenterOperationException
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.GetEquestrianCenterInvitationsUseCase
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.dto.EquestrianCenterInvitationDetail
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.out.EquestrianCenterInvitationRepository

@@ -2,9 +2,9 @@ package dev.maldallija.maldallijabe.common.adapter.`in`.web
 
 import dev.maldallija.maldallijabe.auth.domain.exception.AuthException
 import dev.maldallija.maldallijabe.auth.domain.exception.InsufficientPermissionsException
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterException
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.UnauthorizedEquestrianCenterOperationException
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterException
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.UnauthorizedEquestrianCenterOperationException
 import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.exception.EquestrianCenterInvitationException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.EquestrianCenterStaffException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.StaffNotFoundException

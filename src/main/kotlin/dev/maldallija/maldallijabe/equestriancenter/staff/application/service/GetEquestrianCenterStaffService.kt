@@ -1,7 +1,7 @@
 package dev.maldallija.maldallijabe.equestriancenter.staff.application.service
 
-import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
-import dev.maldallija.maldallijabe.equestriancenter.domain.exception.EquestrianCenterNotFoundException
+import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.GetEquestrianCenterStaffUseCase
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.`in`.dto.EquestrianCenterStaffDetail
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository

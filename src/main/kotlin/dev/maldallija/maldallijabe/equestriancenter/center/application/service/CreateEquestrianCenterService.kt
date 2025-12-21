@@ -1,0 +1,47 @@
+package dev.maldallija.maldallijabe.equestriancenter.center.application.service
+
+import dev.maldallija.maldallijabe.equestriancenter.center.application.port.`in`.CreateEquestrianCenterUseCase
+import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
+import dev.maldallija.maldallijabe.equestriancenter.center.domain.EquestrianCenter
+import dev.maldallija.maldallijabe.user.application.port.out.UserRepository
+import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
+import java.util.UUID
+
+@Service
+@Transactional
+class CreateEquestrianCenterService(
+    private val equestrianCenterRepository: EquestrianCenterRepository,
+    private val userRepository: UserRepository,
+) : CreateEquestrianCenterUseCase {
+    override fun createEquestrianCenter(
+        administratorId: Long,
+        name: String,
+        description: String?,
+        representativeUserUuid: UUID,
+    ) {
+        val representativeUser =
+            userRepository.findByUuid(representativeUserUuid)
+                ?: throw UserNotFoundException()
+
+        val now = Instant.now()
+
+        val equestrianCenter =
+            EquestrianCenter(
+                id = 0,
+                uuid = UUID.randomUUID(),
+                name = name,
+                description = description,
+                representativeUserId = representativeUser.id,
+                createdBy = administratorId,
+                createdAt = now,
+                updatedBy = administratorId,
+                updatedAt = now,
+                deletedAt = null,
+            )
+
+        equestrianCenterRepository.save(equestrianCenter)
+    }
+}

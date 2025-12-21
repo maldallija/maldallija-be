@@ -1,6 +1,6 @@
 package dev.maldallija.maldallijabe.equestriancenter.invitation.application.service
 
-import dev.maldallija.maldallijabe.equestriancenter.application.port.out.EquestrianCenterRepository
+import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.GetUserEquestrianCenterInvitationsUseCase
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.`in`.dto.UserEquestrianCenterInvitationDetail
 import dev.maldallija.maldallijabe.equestriancenter.invitation.application.port.out.EquestrianCenterInvitationRepository

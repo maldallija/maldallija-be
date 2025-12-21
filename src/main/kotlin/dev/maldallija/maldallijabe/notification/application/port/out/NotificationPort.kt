@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.common.application.port.out
+package dev.maldallija.maldallijabe.notification.application.port.out
 
 import dev.maldallija.maldallijabe.common.domain.ExceptionEvent
 

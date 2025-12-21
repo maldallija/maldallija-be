@@ -1,4 +1,4 @@
-package dev.maldallija.maldallijabe.common.adapter.config
+package dev.maldallija.maldallijabe.notification.config
 
 import dev.maldallija.maldallijabe.common.config.Environment
 import org.springframework.boot.context.properties.ConfigurationProperties

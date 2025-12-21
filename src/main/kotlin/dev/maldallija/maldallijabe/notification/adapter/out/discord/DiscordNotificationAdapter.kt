@@ -1,10 +1,10 @@
-package dev.maldallija.maldallijabe.common.adapter.out.notification
+package dev.maldallija.maldallijabe.notification.adapter.out.discord
 
-import dev.maldallija.maldallijabe.common.adapter.out.notification.dto.DiscordEmbed
-import dev.maldallija.maldallijabe.common.adapter.out.notification.dto.DiscordField
-import dev.maldallija.maldallijabe.common.adapter.out.notification.dto.DiscordWebhookRequest
-import dev.maldallija.maldallijabe.common.application.port.out.NotificationPort
 import dev.maldallija.maldallijabe.common.domain.ExceptionEvent
+import dev.maldallija.maldallijabe.notification.adapter.out.discord.dto.DiscordEmbed
+import dev.maldallija.maldallijabe.notification.adapter.out.discord.dto.DiscordField
+import dev.maldallija.maldallijabe.notification.adapter.out.discord.dto.DiscordWebhookRequest
+import dev.maldallija.maldallijabe.notification.application.port.out.NotificationPort
 import org.springframework.web.client.RestClient
 
 class DiscordNotificationAdapter(

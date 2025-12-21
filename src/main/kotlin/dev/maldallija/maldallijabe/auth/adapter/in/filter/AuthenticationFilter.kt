@@ -30,14 +30,14 @@ class AuthenticationFilter(
             try {
                 UUID.fromString(authenticationAccessSessionCookie)
             } catch (e: IllegalArgumentException) {
-                throw SimpleAuthenticationException("Invalid authentication session format")
+                throw SimpleAuthenticationException("Invalid authentication session format", e)
             }
 
         val userId =
             try {
                 validateAuthenticationSessionUseCase.validateAuthenticationSession(authenticationAccessSessionId)
             } catch (e: Exception) {
-                throw SimpleAuthenticationException("Authentication session validation failed")
+                throw SimpleAuthenticationException("Authentication session validation failed", e)
             }
 
         val authentication = UsernamePasswordAuthenticationToken(userId, null, emptyList())
@@ -48,7 +48,8 @@ class AuthenticationFilter(
 
     private class SimpleAuthenticationException(
         message: String,
-    ) : AuthenticationException(message)
+        cause: Throwable? = null,
+    ) : AuthenticationException(message, cause)
 
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.requestURI

@@ -68,6 +68,12 @@ class UpdateSeasonService(
         if (title.isBlank()) {
             throw InvalidSeasonTitleException()
         }
+        // NOTE: 과거 날짜로 시즌 수정 허용됨
+        // - 시스템 도입 시 과거 시즌 데이터 입력 필요 (예: 작년 시즌 기록)
+        // - 데이터 마이그레이션, 기록 관리 등의 use case
+        // - 직원만 수정 가능하므로 의도적인 과거 데이터 수정은 valid
+        // - 프론트엔드에서 과거 날짜 입력 시 확인 메시지 권장 (실수 방지)
+        // - 향후 startDate >= today 검증이 필요하면 추가 고려
         if (endDate.isBefore(startDate)) {
             throw InvalidSeasonDateRangeException()
         }

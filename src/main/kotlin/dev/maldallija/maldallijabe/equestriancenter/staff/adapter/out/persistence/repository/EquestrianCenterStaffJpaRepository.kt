@@ -12,6 +12,11 @@ interface EquestrianCenterStaffJpaRepository : JpaRepository<EquestrianCenterSta
         userId: Long,
     ): Boolean
 
+    fun findByEquestrianCenterIdAndUserIdAndLeftAtIsNullAndDeletedAtIsNull(
+        equestrianCenterId: Long,
+        userId: Long,
+    ): EquestrianCenterStaffEntity?
+
     fun findByUuidAndDeletedAtIsNull(uuid: UUID): EquestrianCenterStaffEntity?
 
     fun findByEquestrianCenterIdAndLeftAtIsNullAndDeletedAtIsNull(

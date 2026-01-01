@@ -9,6 +9,9 @@ import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.exception.
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.EquestrianCenterStaffException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.StaffNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.UnauthorizedStaffOperationException
+import dev.maldallija.maldallijabe.season.domain.exception.SeasonException
+import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
+import dev.maldallija.maldallijabe.season.domain.exception.UnauthorizedSeasonOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
@@ -168,6 +171,42 @@ class GlobalExceptionHandler {
             ErrorResponse(
                 code = e.errorCode,
                 message = e.message ?: "Staff error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(SeasonNotFoundException::class)
+    fun handleSeasonNotFoundException(e: SeasonNotFoundException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Season not found",
+            )
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(UnauthorizedSeasonOperationException::class)
+    fun handleUnauthorizedSeasonOperationException(e: UnauthorizedSeasonOperationException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Forbidden",
+            )
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(SeasonException::class)
+    fun handleSeasonException(e: SeasonException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Season error",
             )
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

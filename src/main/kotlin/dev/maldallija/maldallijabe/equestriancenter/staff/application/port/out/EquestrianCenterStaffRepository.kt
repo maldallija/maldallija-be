@@ -11,6 +11,11 @@ interface EquestrianCenterStaffRepository {
         userId: Long,
     ): Boolean
 
+    fun findActiveByEquestrianCenterIdAndUserId(
+        equestrianCenterId: Long,
+        userId: Long,
+    ): EquestrianCenterStaff?
+
     fun findByUuid(uuid: UUID): EquestrianCenterStaff?
 
     fun findByEquestrianCenterIdAndLeftAtIsNull(

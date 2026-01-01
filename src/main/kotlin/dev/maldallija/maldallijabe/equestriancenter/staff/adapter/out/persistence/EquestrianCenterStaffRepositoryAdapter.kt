@@ -23,6 +23,16 @@ class EquestrianCenterStaffRepositoryAdapter(
             userId = userId,
         )
 
+    override fun findActiveByEquestrianCenterIdAndUserId(
+        equestrianCenterId: Long,
+        userId: Long,
+    ): EquestrianCenterStaff? =
+        equestrianCenterStaffJpaRepository
+            .findByEquestrianCenterIdAndUserIdAndLeftAtIsNullAndDeletedAtIsNull(
+                equestrianCenterId = equestrianCenterId,
+                userId = userId,
+            )?.let { equestrianCenterStaffMapper.toDomain(it) }
+
     override fun findByUuid(uuid: UUID): EquestrianCenterStaff? =
         equestrianCenterStaffJpaRepository
             .findByUuidAndDeletedAtIsNull(uuid)

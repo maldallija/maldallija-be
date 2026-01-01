@@ -60,9 +60,9 @@
 
 # 개발 순서
 
-## Phase 1: 인증/인가 ✅ COMPLETED
-1. **User** - 회원가입 (`is_system_admin` 플래그 포함) ✅ COMPLETED
-2. ~~**Token** - Opaque 토큰 발급/검증/삭제, 로그인/로그아웃~~ ✅ IMPLEMENTED
+## Phase 1: 인증/인가 COMPLETED
+1. **User** - 회원가입 (`is_system_admin` 플래그 포함) COMPLETED
+2. ~~**Token** - Opaque 토큰 발급/검증/삭제, 로그인/로그아웃~~ IMPLEMENTED
    - **AuthenticationAccessSession** (1시간) + **AuthenticationRefreshSession** (30일)
    - 로그인/로그아웃/세션갱신 구현
    - Rotating refresh token pattern (SESSION_REFRESH 시 기존 세션 무효화)
@@ -72,35 +72,37 @@
 
 ## Phase 2: 승마장 (MVP)
 
-### Phase 2A: EquestrianCenter CRUD ✅ COMPLETED
+### Phase 2A: EquestrianCenter CRUD COMPLETED
 3. **EquestrianCenter** - 승마장 CRUD, 대표 사용자 지정
-   - ✅ CREATE: POST /api/v1/administration/equestrian-centers (System Admin 전용)
-   - ✅ READ List: GET /api/v1/equestrian-centers (공개, 페이지네이션)
-   - ✅ READ Detail: GET /api/v1/equestrian-centers/{uuid} (공개)
-   - ✅ UPDATE: PATCH /api/v1/equestrian-centers/{uuid} (대표 사용자 전용, name/description만)
-   - ❌ DELETE: 보류 (soft delete via deleted_at)
+   - CREATE: POST /api/v1/administration/equestrian-centers (System Admin 전용)
+   - READ List: GET /api/v1/equestrian-centers (공개, 페이지네이션)
+   - READ Detail: GET /api/v1/equestrian-centers/{uuid} (공개)
+   - UPDATE: PATCH /api/v1/equestrian-centers/{uuid} (대표 사용자 전용, name/description만)
+   - DELETE: 보류 (soft delete via deleted_at)
    - Renamed: leader → representative (11 files)
 
-### Phase 2B: Invitation System ✅ COMPLETED
+### Phase 2B: Invitation System COMPLETED
 4. **EquestrianCenterInvitation** - 초대 시스템 (로그형 테이블)
-   - ✅ POST /api/v1/equestrian-centers/{centerUuid}/invitations (초대 발송, 대표 전용)
-   - ✅ GET /api/v1/equestrian-centers/{centerUuid}/invitations (발송한 초대 목록)
-   - ✅ DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (초대 취소)
-   - ✅ GET /api/v1/users/{userUuid}/equestrian-center-invitations (받은 초대 목록)
-   - ✅ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve (승인)
-   - ✅ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject (거절)
+   - POST /api/v1/equestrian-centers/{centerUuid}/invitations (초대 발송, 대표 전용)
+   - GET /api/v1/equestrian-centers/{centerUuid}/invitations (발송한 초대 목록)
+   - DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (초대 취소)
+   - GET /api/v1/users/{userUuid}/equestrian-center-invitations (받은 초대 목록)
+   - POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve (승인)
+   - POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject (거절)
    - Status: INVITED → APPROVED/REJECTED/EXPIRED/WITHDRAWN
    - 7일 만료 (조회 시점 체크, 배치 없음)
    - 재초대 정책: REJECTED/EXPIRED/WITHDRAWN 후 가능, INVITED 중복 불가
 
-### Phase 2C: Staff Management ❌ NOT IMPLEMENTED
+### Phase 2C: Staff Management COMPLETED
 5. **EquestrianCenterStaff** - 직원 관리 (입퇴사 이력 추적)
-   - GET /api/v1/equestrian-centers/{centerUuid}/staff (직원 목록, 공개 여부는 대표 설정)
-   - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid} (추방/탈퇴: 대표면 추방, 본인이면 탈퇴)
-   - GET /api/v1/users/{userUuid}/equestrian-center-staff-memberships (직원으로 속한 승마장 목록)
+   - GET /api/v1/equestrian-centers/{centerUuid}/staff (직원 목록 조회, 페이지네이션)
+   - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid}/expel (추방, 대표 전용)
+   - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid}/leave (탈퇴, 본인 전용)
+   - GET /api/v1/users/{userUuid}/equestrian-center-staff-affiliations (직원으로 속한 승마장 목록)
    - joined_at, left_at, left_by, left_reason 추적
    - Leave reasons: LEFT_VOLUNTARILY, EXPELLED
    - 재가입 시 새 레코드 생성 (입퇴사 이력 보존)
+   - N+1 방지: batch fetching 구현
 
 6. MVP: 모든 센터 직원이 동일한 권한 (역할/권한 시스템은 Post-MVP)
    - Post-MVP: role 컬럼 추가 (INSTRUCTOR, MANAGER, ADMIN)

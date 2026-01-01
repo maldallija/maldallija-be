@@ -4,7 +4,7 @@
 - Google login
 - Apple login
 
-## Token Enhancement ✅ IMPLEMENTED
+## Token Enhancement IMPLEMENTED
 - ~~Split into Access Token (short-lived) + Refresh Token (long-lived)~~
 - ~~Current: single opaque token with 1 day expiry~~
 - **Implemented**: Dual-session system (authentication_access_session 1h + authentication_refresh_session 30d)
@@ -91,3 +91,76 @@
 - AWS (EC2/ECS/EKS TBD)
 - Docker containerization
 - CI/CD pipeline
+
+## Architecture Improvements (Post-Phase 7)
+
+### Multi-Module Architecture
+**Current**: Single module with Hexagonal Architecture
+**Future Consideration**: Split into multiple Gradle modules
+
+**Benefits:**
+- Compile-time dependency validation between domains
+- Incremental build (faster build times)
+- Easier MSA migration (module → microservice)
+- Clear layer separation (domain/application/adapter modules)
+
+**When to Consider:**
+- After Phase 6-7 completion (all domains implemented)
+- When domain boundaries are stable
+- When team size grows (2+ developers)
+- When actual service launch requires scalability
+
+**Proposed Structure:**
+```
+maldallija-be/
+├── common/
+│   ├── common-domain/
+│   └── common-util/
+├── user-service/
+│   ├── user-domain/
+│   ├── user-application/
+│   └── user-adapter/
+├── equestriancenter-service/
+└── season-service/
+```
+
+**Current Alternative:** ArchUnit tests to enforce package dependencies
+
+### Command Pattern (execute() method)
+**Current**: Explicit method names per UseCase
+```kotlin
+interface SignInUseCase {
+    fun signIn(email: String, password: String): SignInResult
+}
+```
+
+**Alternative**: Unified execute() with Command objects
+```kotlin
+interface SignInUseCase {
+    fun execute(command: SignInCommand): SignInResult
+}
+data class SignInCommand(val email: String, val password: String)
+```
+
+**Benefits of execute() pattern:**
+- Consistent interface across all UseCases
+- Easier AOP/Decorator application (logging, transaction, validation)
+- Command object reusability in tests
+- Audit trail (store Command objects for history)
+
+**When to Consider:**
+- When implementing CQRS (Command Query Responsibility Segregation)
+- When Command Bus is needed
+- When audit logging/event sourcing is required
+- When team adopts DDD tactical patterns heavily
+
+**Current Approach Rationale:**
+- Clean Architecture recommends explicit method names (business language)
+- Project size suitable for simple approach
+- Most UseCases have 3-5 parameters (Command objects would add boilerplate)
+- Faster development speed in early phases
+
+**Hybrid Approach:**
+- Keep explicit names for simple UseCases (≤3 parameters)
+- Use Command pattern for complex UseCases (≥4 parameters)
+- Example: Season creation might benefit from CreateSeasonCommand

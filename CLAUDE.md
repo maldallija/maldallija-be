@@ -268,9 +268,9 @@ dev.maldallija.maldallijabe
 
 #### Naming Conventions
 - **ALWAYS use full names** - NO abbreviations or shortened forms
-  - ✅ `RefreshAuthenticationSessionUseCase` ❌ `RefreshSessionUseCase`
-  - ✅ `authenticationAccessSession` ❌ `session` or `accessSession`
-  - ✅ `authenticationRefreshSessionId` ❌ `refreshId` or `sessionId`
+  - `RefreshAuthenticationSessionUseCase` `RefreshSessionUseCase`
+  - `authenticationAccessSession` `session` or `accessSession`
+  - `authenticationRefreshSessionId` `refreshId` or `sessionId`
 - Variables, methods, classes, parameters - all must use complete descriptive names
 - Only exception: Standard loop counters (i, j) in rare cases where context is obvious
 
@@ -329,7 +329,7 @@ dev.maldallija.maldallijabe
   - Ports/Service/Persistence/Web implemented with old structure
   - **TODO**: Migrate to new structure (remove role, add is_system_admin)
 
-- **Authentication System** (Phase 1) ✅ COMPLETED
+- **Authentication System** (Phase 1) COMPLETED
   - Dual session system: authentication_access_session (1h) + authentication_refresh_session (30d)
   - Sign-in/Sign-out/Refresh endpoints with HttpOnly cookies
   - AuthenticationFilter with ValidateAuthenticationSessionUseCase
@@ -338,7 +338,7 @@ dev.maldallija.maldallijabe
   - InvalidSessionException → 401 UNAUTHORIZED
   - Full hexagonal architecture compliance
 
-- **EquestrianCenter CRUD** (Phase 2A) ✅ COMPLETED
+- **EquestrianCenter CRUD** (Phase 2A) COMPLETED
   - CREATE: POST /api/v1/administration/equestrian-centers (System Admin only)
   - READ List: GET /api/v1/equestrian-centers (Public, paginated)
   - READ Detail: GET /api/v1/equestrian-centers/{uuid} (Public)
@@ -347,28 +347,31 @@ dev.maldallija.maldallijabe
   - Renamed "leader" → "representative" throughout codebase
   - AuthenticationFilter allows only GET requests without auth
 
-- **EquestrianCenter Invitation System** (Phase 2B) 🔄 IN PROGRESS (4/6 endpoints completed)
+- **EquestrianCenter Invitation System** (Phase 2B) COMPLETED (6/6 endpoints)
   - EquestrianCenterInvitation domain/table implemented (log-style)
   - Invitation API endpoints:
-    - ✅ POST /api/v1/equestrian-centers/{centerUuid}/invitations (send invitation)
-    - ✅ GET /api/v1/equestrian-centers/{centerUuid}/invitations (list sent invitations)
-    - ✅ DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw)
-    - ✅ GET /api/v1/users/{userUuid}/equestrian-center-invitations (received invitations)
-    - ❌ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve
-    - ❌ POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject
-  - 7-day expiration logic (check at query time) ✅
-  - Re-invitation policy enforcement ✅
-  - N+1 prevention with batch fetching ✅
-  - Authorization: Representative for center endpoints, self-only for user endpoints ✅
+    - POST /api/v1/equestrian-centers/{centerUuid}/invitations (send invitation)
+    - GET /api/v1/equestrian-centers/{centerUuid}/invitations (list sent invitations)
+    - DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw)
+    - GET /api/v1/users/{userUuid}/equestrian-center-invitations (received invitations)
+    - POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve
+    - POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/reject
+  - 7-day expiration logic (check at query time)
+  - Re-invitation policy enforcement
+  - N+1 prevention with batch fetching
+  - Authorization: Representative for center endpoints, self-only for user endpoints
+  - Invitation approval creates EquestrianCenterStaff record with joinedAt
 
-- **EquestrianCenterStaff Management** (Phase 2C) ❌ NOT IMPLEMENTED
-  - EquestrianCenterStaff domain/table designed (join/leave history tracking)
-  - Staff management API endpoints not implemented:
+- **EquestrianCenterStaff Management** (Phase 2C) COMPLETED (4/4 endpoints)
+  - EquestrianCenterStaff domain/table implemented (join/leave history tracking)
+  - Staff management API endpoints:
     - GET /api/v1/equestrian-centers/{centerUuid}/staff (list staff)
-    - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid} (expel)
-    - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/me (leave)
-    - GET /api/v1/my/equestrian-center-staff-memberships (my centers as staff)
-  - Leave/expulsion tracking (left_at, left_by, left_reason)
+    - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid}/expel (representative only)
+    - DELETE /api/v1/equestrian-centers/{centerUuid}/staff/{staffUuid}/leave (self only)
+    - GET /api/v1/users/{userUuid}/equestrian-center-staff-affiliations (my centers as staff)
+  - Leave/expulsion tracking: left_at, left_by, left_reason (LEFT_VOLUNTARILY/EXPELLED)
+  - N+1 prevention with batch fetching
+  - Employment history preserved on re-join
   - MVP: All staff have equal permissions (no role system, instructor only)
   - Post-MVP: role column (INSTRUCTOR, MANAGER, ADMIN)
 
@@ -392,12 +395,12 @@ dev.maldallija.maldallijabe
 
 ## Next Steps
 
-1. ~~Migrate User domain to new schema (remove role, add is_system_admin)~~ ✅ COMPLETED
-2. ~~Implement Token domain (login, logout, token validation)~~ ✅ COMPLETED (as dual-session system)
-3. ~~Add Spring Security configuration~~ ✅ COMPLETED (AuthenticationFilter + SecurityConfig)
-4. ~~EquestrianCenter creation~~ ✅ COMPLETED (Phase 2 partial)
-5. Complete EquestrianCenter CRUD (retrieval, update, delete) (Phase 2)
-6. Implement InstructorGroupMember (Phase 2)
+1. ~~Migrate User domain to new schema (remove role, add is_system_admin)~~ COMPLETED
+2. ~~Implement Token domain (login, logout, token validation)~~ COMPLETED (as dual-session system)
+3. ~~Add Spring Security configuration~~ COMPLETED (AuthenticationFilter + SecurityConfig)
+4. ~~EquestrianCenter CRUD~~ COMPLETED (Phase 2A)
+5. ~~EquestrianCenter Invitation System~~ COMPLETED (Phase 2B)
+6. ~~EquestrianCenterStaff Management~~ COMPLETED (Phase 2C)
 7. Implement Season + Enrollment (with enrollment log) (Phase 3)
 8. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
 
@@ -607,10 +610,10 @@ dev.maldallija.maldallijabe
   - `leaderUserId` → `representativeUserId` in domain, `leader_user_id` → `representative_user_id` in DB
   - Updated entity with `@Column(name = "representative_user_id")` for backward compatibility
 - **CRUD operations implemented**:
-  - CREATE: POST /api/v1/administration/equestrian-centers (System Admin only) ✅
-  - READ List: GET /api/v1/equestrian-centers (Public, paginated, deleted excluded) ✅
-  - READ Detail: GET /api/v1/equestrian-centers/{uuid} (Public, returns representativeUserUuid) ✅
-  - UPDATE: PATCH /api/v1/equestrian-centers/{uuid} (Representative only, name/description) ✅
+  - CREATE: POST /api/v1/administration/equestrian-centers (System Admin only)
+  - READ List: GET /api/v1/equestrian-centers (Public, paginated, deleted excluded)
+  - READ Detail: GET /api/v1/equestrian-centers/{uuid} (Public, returns representativeUserUuid)
+  - UPDATE: PATCH /api/v1/equestrian-centers/{uuid} (Representative only, name/description)
   - DELETE: Deferred (soft delete via deleted_at)
 - **AuthenticationFilter refinement**:
   - Changed from allowing all `/equestrian-centers` to only GET requests without auth
@@ -687,7 +690,7 @@ dev.maldallija.maldallijabe
 - **CLAUDE.md**:
   - Updated Domain Model (EquestrianCenterInvitation, InstructorGroupMember details)
   - Updated Business Rules (center creation & membership flow)
-  - Updated Implementation Status (Phase 2A ✅, 2B/2C ❌)
+  - Updated Implementation Status (Phase 2A, 2B/2C)
   - Added this development log entry
 - **Related Documents section**: Updated table count to 15
 
@@ -840,9 +843,9 @@ After:  EquestrianCenterStaff
 **Phase 2B continuation - 4/6 invitation endpoints completed:**
 
 **Implemented endpoints:**
-1. ✅ GET /api/v1/equestrian-centers/{centerUuid}/invitations (sent invitations list)
-2. ✅ DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw invitation)
-3. ✅ GET /api/v1/users/{userUuid}/equestrian-center-invitations (received invitations list)
+1. GET /api/v1/equestrian-centers/{centerUuid}/invitations (sent invitations list)
+2. DELETE /api/v1/equestrian-centers/{centerUuid}/invitations/{invitationUuid} (withdraw invitation)
+3. GET /api/v1/users/{userUuid}/equestrian-center-invitations (received invitations list)
 
 **Remaining endpoints:**
 - POST /api/v1/users/{userUuid}/equestrian-center-invitations/{invitationUuid}/approve
@@ -1011,3 +1014,33 @@ After:  EquestrianCenterStaff
 
 **Documentation updated:**
 - **CLAUDE.md**: This Development Log entry
+
+### 2026-01-01: Phase 2 completion verification and documentation update
+
+**Phase 2B: Invitation System completion (6/6 endpoints):**
+- All invitation endpoints implemented and verified:
+  - Create, list, withdraw invitations (center perspective)
+  - List received invitations, approve, reject (user perspective)
+- Key features:
+  - ApproveEquestrianCenterInvitationService creates EquestrianCenterStaff record on approval
+  - RejectEquestrianCenterInvitationService handles rejection with respondedAt tracking
+  - Expiration validation (7 days), duplicate response prevention
+  - Authorization:본인만 승인/거절 가능 (self-only access)
+
+**Phase 2C: Staff Management completion (4/4 endpoints):**
+- All staff management endpoints implemented and verified:
+  - GET /api/v1/equestrian-centers/{centerUuid}/staff (list staff, paginated)
+  - DELETE /{centerUuid}/staff/{staffUuid}/expel (representative only, sets EXPELLED)
+  - DELETE /{centerUuid}/staff/{staffUuid}/leave (self only, sets LEFT_VOLUNTARILY)
+  - GET /api/v1/users/{userUuid}/equestrian-center-staff-affiliations (my centers)
+- Employment history tracking: left_at, left_by, left_reason columns
+- N+1 prevention with batch fetching for users and equestrian centers
+- Re-join creates new staff record (preserves employment history)
+
+**Documentation synchronized:**
+- Updated CLAUDE.md Current Implementation Status:
+  - Phase 2B: "IN PROGRESS (4/6)" → "COMPLETED (6/6)"
+  - Phase 2C: "NOT IMPLEMENTED" → "COMPLETED (4/4)"
+- Updated Next Steps: Removed completed Phase 2 items, strikethrough formatting
+- Verified all endpoints exist: UseCases, Services, Controllers, DTOs
+- Phase 1-2 fully completed, Phase 3 (Season + Enrollment) is next priority

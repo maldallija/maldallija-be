@@ -44,6 +44,32 @@
 - Profile edit (name, phone, etc.)
 - Instructor profile view (Member can see Instructor info)
 
+## Lesson Date Range Validation (Phase 5)
+**Issue**: When updating Season dates, need to validate that all existing Lessons fall within the new date range
+
+**Current State (Phase 3)**:
+- Season update allows changing startDate/endDate without checking existing Lessons
+- This can cause Lessons to exist outside Season period
+
+**Required Validation (Phase 5)**:
+```kotlin
+// In UpdateSeasonService or UpdateLessonService
+val hasLessonsOutsideRange = lessonRepository.existsBySeasonIdAndDateOutsideRange(
+    seasonId = season.id,
+    startDate = newStartDate,
+    endDate = newEndDate
+)
+if (hasLessonsOutsideRange) {
+    throw CannotUpdateSeasonDateWithExistingLessonsException()
+}
+```
+
+**Alternative Approach**:
+- Allow date update but auto-cancel Lessons outside new range
+- Notify affected members
+
+**Decision Required**: Discuss with product team during Phase 5 implementation
+
 ## Season Review System (Post-MVP)
 **Feature**: Members who participated in a season can write reviews after the season ends
 

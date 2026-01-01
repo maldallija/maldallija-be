@@ -3,6 +3,8 @@ package dev.maldallija.maldallijabe.season.enrollment.adapter.out.persistence
 import dev.maldallija.maldallijabe.season.enrollment.application.port.out.SeasonEnrollmentRepository
 import dev.maldallija.maldallijabe.season.enrollment.domain.EnrollmentStatus
 import dev.maldallija.maldallijabe.season.enrollment.domain.SeasonEnrollment
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import java.util.UUID
 
@@ -61,4 +63,26 @@ class SeasonEnrollmentRepositoryAdapter(
             seasonId = seasonId,
             memberId = memberId,
         )
+
+    override fun findBySeasonIdAndOptionalStatus(
+        seasonId: Long,
+        enrollmentStatus: EnrollmentStatus?,
+        pageable: Pageable,
+    ): Page<SeasonEnrollment> {
+        val entityPage =
+            if (enrollmentStatus != null) {
+                seasonEnrollmentJpaRepository.findBySeasonIdAndEnrollmentStatus(
+                    seasonId = seasonId,
+                    enrollmentStatus = enrollmentStatus,
+                    pageable = pageable,
+                )
+            } else {
+                seasonEnrollmentJpaRepository.findBySeasonId(
+                    seasonId = seasonId,
+                    pageable = pageable,
+                )
+            }
+
+        return entityPage.map { seasonEnrollmentMapper.toDomain(it) }
+    }
 }

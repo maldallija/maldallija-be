@@ -1,6 +1,8 @@
 package dev.maldallija.maldallijabe.season.enrollment.adapter.out.persistence
 
 import dev.maldallija.maldallijabe.season.enrollment.domain.EnrollmentStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
@@ -27,4 +29,15 @@ interface SeasonEnrollmentJpaRepository : JpaRepository<SeasonEnrollmentEntity, 
         seasonId: Long,
         memberId: Long,
     ): Boolean
+
+    fun findBySeasonId(
+        seasonId: Long,
+        pageable: Pageable,
+    ): Page<SeasonEnrollmentEntity>
+
+    fun findBySeasonIdAndEnrollmentStatus(
+        seasonId: Long,
+        enrollmentStatus: EnrollmentStatus,
+        pageable: Pageable,
+    ): Page<SeasonEnrollmentEntity>
 }

@@ -19,6 +19,13 @@ class InvalidSeasonDateRangeException :
         message = "시즌 종료일은 시작일보다 이후여야 합니다.",
     )
 
+class InvalidSearchDateRangeException(
+    message: String,
+) : SeasonException(
+        errorCode = "INVALID_SEARCH_DATE_RANGE",
+        message = message,
+    )
+
 class InvalidSeasonCapacityException :
     SeasonException(
         errorCode = "INVALID_SEASON_CAPACITY",

@@ -2,20 +2,30 @@ package dev.maldallija.maldallijabe.season.adapter.`in`.web
 
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.CreateSeasonRequest
+import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonListResponse
 import dev.maldallija.maldallijabe.season.application.port.`in`.CreateSeasonUseCase
+import dev.maldallija.maldallijabe.season.application.port.`in`.GetEquestrianCenterSeasonsUseCase
+import dev.maldallija.maldallijabe.season.domain.SeasonStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 import java.util.UUID
 
 @Tag(name = "Season", description = "시즌 관리 API")
@@ -23,6 +33,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/equestrian-centers")
 class SeasonController(
     private val createSeasonUseCase: CreateSeasonUseCase,
+    private val getEquestrianCenterSeasonsUseCase: GetEquestrianCenterSeasonsUseCase,
 ) {
     @Operation(summary = "시즌 생성")
     @ApiResponses(
@@ -66,5 +77,54 @@ class SeasonController(
         )
 
         return ResponseEntity.status(201).build()
+    }
+
+    @Operation(
+        summary = "승마장 시즌 목록 조회",
+        description = "status: 전체(null)/ACTIVE/CLOSED, startDate+endDate: 날짜 범위 조회 (ex: 2024-03-01 ~ 2024-03-31)",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @GetMapping("/{equestrianCenterUuid}/seasons")
+    fun getEquestrianCenterSeasons(
+        @PathVariable equestrianCenterUuid: UUID,
+        @RequestParam(required = false) status: SeasonStatus?,
+        @RequestParam(required = false) startDate: LocalDate?,
+        @RequestParam(required = false) endDate: LocalDate?,
+        @PageableDefault(size = 20, sort = ["startDate"], direction = Sort.Direction.DESC) pageable: Pageable,
+    ): ResponseEntity<Page<SeasonListResponse>> {
+        val seasons =
+            getEquestrianCenterSeasonsUseCase.getEquestrianCenterSeasons(
+                equestrianCenterUuid = equestrianCenterUuid,
+                status = status,
+                startDate = startDate,
+                endDate = endDate,
+                pageable = pageable,
+            )
+
+        val response =
+            seasons.map { season ->
+                SeasonListResponse(
+                    seasonUuid = season.seasonUuid,
+                    title = season.title,
+                    startDate = season.startDate,
+                    endDate = season.endDate,
+                    capacity = season.capacity,
+                    status = season.status,
+                )
+            }
+
+        return ResponseEntity.ok(response)
     }
 }

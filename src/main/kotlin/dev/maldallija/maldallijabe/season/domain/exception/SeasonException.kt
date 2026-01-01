@@ -43,3 +43,15 @@ class UnauthorizedSeasonOperationException :
         errorCode = "UNAUTHORIZED_SEASON_OPERATION",
         message = "해당 승마장의 직원만 시즌을 관리할 수 있습니다.",
     )
+
+class CannotUpdateClosedSeasonException :
+    SeasonException(
+        errorCode = "CANNOT_UPDATE_CLOSED_SEASON",
+        message = "종료된 시즌은 수정할 수 없습니다.",
+    )
+
+class InvalidSeasonTitleException :
+    SeasonException(
+        errorCode = "INVALID_SEASON_TITLE",
+        message = "시즌명은 공백일 수 없습니다.",
+    )

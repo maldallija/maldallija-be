@@ -5,9 +5,11 @@ import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.CreateSeasonReque
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.EquestrianCenterInfo
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonDetailResponse
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonListResponse
+import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.UpdateSeasonRequest
 import dev.maldallija.maldallijabe.season.application.port.`in`.CreateSeasonUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.GetEquestrianCenterSeasonsUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.GetSeasonDetailUseCase
+import dev.maldallija.maldallijabe.season.application.port.`in`.UpdateSeasonUseCase
 import dev.maldallija.maldallijabe.season.domain.SeasonStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -22,6 +24,7 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -38,6 +41,7 @@ class SeasonController(
     private val createSeasonUseCase: CreateSeasonUseCase,
     private val getEquestrianCenterSeasonsUseCase: GetEquestrianCenterSeasonsUseCase,
     private val getSeasonDetailUseCase: GetSeasonDetailUseCase,
+    private val updateSeasonUseCase: UpdateSeasonUseCase,
 ) {
     @Operation(summary = "시즌 생성")
     @ApiResponses(
@@ -177,5 +181,51 @@ class SeasonController(
             )
 
         return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "승마장 시즌 수정")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "204",
+                description = "수정 성공",
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 (날짜 범위, 정원, 티켓 수 등)",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "해당 승마장의 직원만 시즌 수정 가능",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장 또는 시즌을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PatchMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}")
+    fun updateSeason(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @AuthenticationPrincipal requestingUserId: Long,
+        @RequestBody request: UpdateSeasonRequest,
+    ): ResponseEntity<Void> {
+        updateSeasonUseCase.updateSeason(
+            equestrianCenterUuid = equestrianCenterUuid,
+            seasonUuid = seasonUuid,
+            requestingUserId = requestingUserId,
+            title = request.title,
+            description = request.description,
+            startDate = request.startDate,
+            endDate = request.endDate,
+            capacity = request.capacity,
+            defaultTicketCount = request.defaultTicketCount,
+        )
+
+        return ResponseEntity.noContent().build()
     }
 }

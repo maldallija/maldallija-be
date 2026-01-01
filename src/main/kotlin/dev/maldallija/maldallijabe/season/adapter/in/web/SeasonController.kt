@@ -6,6 +6,7 @@ import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.EquestrianCenterI
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonDetailResponse
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonListResponse
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.UpdateSeasonRequest
+import dev.maldallija.maldallijabe.season.application.port.`in`.CloseSeasonUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.CreateSeasonUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.GetEquestrianCenterSeasonsUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.GetSeasonDetailUseCase
@@ -42,6 +43,7 @@ class SeasonController(
     private val getEquestrianCenterSeasonsUseCase: GetEquestrianCenterSeasonsUseCase,
     private val getSeasonDetailUseCase: GetSeasonDetailUseCase,
     private val updateSeasonUseCase: UpdateSeasonUseCase,
+    private val closeSeasonUseCase: CloseSeasonUseCase,
 ) {
     @Operation(summary = "시즌 생성")
     @ApiResponses(
@@ -224,6 +226,45 @@ class SeasonController(
             endDate = request.endDate,
             capacity = request.capacity,
             defaultTicketCount = request.defaultTicketCount,
+        )
+
+        return ResponseEntity.noContent().build()
+    }
+
+    @Operation(summary = "승마장 시즌 종료")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "204",
+                description = "종료 성공",
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "활성화된 시즌이 아님",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "해당 승마장의 직원만 시즌 종료 가능",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장 또는 시즌을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PatchMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/close")
+    fun closeSeason(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @AuthenticationPrincipal requestingUserId: Long,
+    ): ResponseEntity<Void> {
+        closeSeasonUseCase.closeSeason(
+            equestrianCenterUuid = equestrianCenterUuid,
+            seasonUuid = seasonUuid,
+            requestingUserId = requestingUserId,
         )
 
         return ResponseEntity.noContent().build()

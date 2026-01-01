@@ -55,3 +55,9 @@ class InvalidSeasonTitleException :
         errorCode = "INVALID_SEASON_TITLE",
         message = "시즌명은 공백일 수 없습니다.",
     )
+
+class CannotCloseInactiveSeasonException :
+    SeasonException(
+        errorCode = "CANNOT_CLOSE_INACTIVE_SEASON",
+        message = "활성화된 시즌만 종료할 수 있습니다.",
+    )

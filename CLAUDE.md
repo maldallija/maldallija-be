@@ -324,12 +324,7 @@ dev.maldallija.maldallijabe
 ## Current Implementation Status
 
 ### Completed
-- **User domain** (Phase 1 partial) - NEEDS UPDATE for new schema
-  - Domain: `User.kt` (has old `role` field, needs `is_system_admin`)
-  - Ports/Service/Persistence/Web implemented with old structure
-  - **TODO**: Migrate to new structure (remove role, add is_system_admin)
-
-- **Authentication System** (Phase 1) COMPLETED
+- **Authentication System** (Phase 1)
   - Dual session system: authentication_access_session (1h) + authentication_refresh_session (30d)
   - Sign-in/Sign-out/Refresh endpoints with HttpOnly cookies
   - AuthenticationFilter with ValidateAuthenticationSessionUseCase
@@ -338,7 +333,7 @@ dev.maldallija.maldallijabe
   - InvalidSessionException → 401 UNAUTHORIZED
   - Full hexagonal architecture compliance
 
-- **EquestrianCenter CRUD** (Phase 2A) COMPLETED
+- **EquestrianCenter CRUD** (Phase 2A)
   - CREATE: POST /api/v1/administration/equestrian-centers (System Admin only)
   - READ List: GET /api/v1/equestrian-centers (Public, paginated)
   - READ Detail: GET /api/v1/equestrian-centers/{uuid} (Public)
@@ -347,7 +342,7 @@ dev.maldallija.maldallijabe
   - Renamed "leader" → "representative" throughout codebase
   - AuthenticationFilter allows only GET requests without auth
 
-- **EquestrianCenter Invitation System** (Phase 2B) COMPLETED (6/6 endpoints)
+- **EquestrianCenter Invitation System** (Phase 2B) - 6/6 endpoints
   - EquestrianCenterInvitation domain/table implemented (log-style)
   - Invitation API endpoints:
     - POST /api/v1/equestrian-centers/{centerUuid}/invitations (send invitation)
@@ -362,7 +357,7 @@ dev.maldallija.maldallijabe
   - Authorization: Representative for center endpoints, self-only for user endpoints
   - Invitation approval creates EquestrianCenterStaff record with joinedAt
 
-- **EquestrianCenterStaff Management** (Phase 2C) COMPLETED (4/4 endpoints)
+- **EquestrianCenterStaff Management** (Phase 2C) - 4/4 endpoints
   - EquestrianCenterStaff domain/table implemented (join/leave history tracking)
   - Staff management API endpoints:
     - GET /api/v1/equestrian-centers/{centerUuid}/staff (list staff)
@@ -375,9 +370,29 @@ dev.maldallija.maldallijabe
   - MVP: All staff have equal permissions (no role system, instructor only)
   - Post-MVP: role column (INSTRUCTOR, MANAGER, ADMIN)
 
+- **Season CRUD** (Phase 3) - 5/5 endpoints
+  - API #1: POST /api/v1/equestrian-centers/{centerUuid}/seasons (시즌 생성)
+  - API #2: GET /api/v1/equestrian-centers/{centerUuid}/seasons (시즌 목록 조회 - status/date filtering)
+  - API #3: GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid} (시즌 상세 조회)
+  - API #4: PATCH /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid} (시즌 수정)
+  - API #5: PATCH /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/close (시즌 종료 ACTIVE→CLOSED)
+  - Audit tracking: created_by, updated_by (감사 추적)
+  - 10 Exception classes (SeasonException hierarchy)
+  - Business policies documented with NOTE comments:
+    - Past date creation allowed (data migration, historical records)
+    - defaultTicketCount behavior (snapshot at enrollment approval time)
+    - CLOSED seasons cannot be reopened (create new season instead)
+  - Public API: Season list/detail accessible without authentication
+  - Phase 5 concern: Lesson date range validation (documented in MEMO.md)
+
+### In Progress
+- **User domain** (Phase 1) - Migration needed
+  - Domain: `User.kt` (has old `role` field, needs `is_system_admin`)
+  - Ports/Service/Persistence/Web implemented with old structure
+  - TODO: Migrate to new structure (remove role, add is_system_admin)
+
 ### Not Implemented Yet
-- **Season + Enrollment** (Phase 3)
-  - Season - CRUD, status, capacity management
+- **SeasonEnrollment** (Phase 3)
   - SeasonEnrollment - apply, approve/reject with status tracking
   - SeasonEnrollmentLog - enrollment history timeline
 - **Ticket system** (Phase 4)
@@ -401,8 +416,9 @@ dev.maldallija.maldallijabe
 4. ~~EquestrianCenter CRUD~~ COMPLETED (Phase 2A)
 5. ~~EquestrianCenter Invitation System~~ COMPLETED (Phase 2B)
 6. ~~EquestrianCenterStaff Management~~ COMPLETED (Phase 2C)
-7. Implement Season + Enrollment (with enrollment log) (Phase 3)
-8. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
+7. ~~Season CRUD~~ COMPLETED (Phase 3 - API #1-5)
+8. Implement SeasonEnrollment (apply, approve/reject, enrollment log) (Phase 3 remaining)
+9. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
 
 ## Development Log
 

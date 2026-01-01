@@ -44,8 +44,52 @@
 - Profile edit (name, phone, etc.)
 - Instructor profile view (Member can see Instructor info)
 
+## Season Review System (Post-MVP)
+**Feature**: Members who participated in a season can write reviews after the season ends
+
+**Authorization**:
+- Eligible writers: Members with APPROVED enrollment status (SeasonEnrollment.status = APPROVED)
+- Available after: Season ends (Season.status = CLOSED)
+- Restriction: One review per member per season
+
+**Data Structure** (Expected):
+```sql
+CREATE TABLE season_review (
+    id BIGSERIAL PRIMARY KEY,
+    uuid UUID UNIQUE NOT NULL,
+    season_id BIGINT NOT NULL,  -- Which season this review is for
+    member_id BIGINT NOT NULL,   -- Review author (member)
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),  -- Rating 1-5 stars
+    content TEXT,  -- Review content (optional)
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    deleted_at TIMESTAMPTZ,
+    UNIQUE (season_id, member_id) WHERE deleted_at IS NULL  -- One review per member
+);
+```
+
+**API Design** (Expected):
+- POST /api/v1/seasons/{seasonUuid}/reviews - Create review
+- GET /api/v1/seasons/{seasonUuid}/reviews - List season reviews
+- PATCH /api/v1/seasons/{seasonUuid}/reviews/{reviewUuid} - Update review (author only)
+- DELETE /api/v1/seasons/{seasonUuid}/reviews/{reviewUuid} - Delete review (author only)
+
+**Validation Logic**:
+1. Season status check: status = CLOSED
+2. Author eligibility check: Verify APPROVED status in SeasonEnrollment
+3. Duplicate prevention: Check if review already exists
+
+**Display**:
+- Season detail page shows average rating + review count
+- Review list: Sortable by latest/rating
+
+**Additional Considerations**:
+- Staff reply feature (equestrian center representative/staff can respond)
+- Report/hide mechanism (for inappropriate reviews)
+- Photo reviews (image attachments)
+
 ## Additional Recommendations
-- Review/Rating: Member rates Lesson after completion
+- Lesson Review/Rating: Member rates Lesson after completion (separate from Season Review)
 - Lesson history: Past lessons with attendance records
 - Statistics dashboard: Instructor sees booking rate, attendance rate
 - Recurring Lesson: Template for weekly repeated lessons

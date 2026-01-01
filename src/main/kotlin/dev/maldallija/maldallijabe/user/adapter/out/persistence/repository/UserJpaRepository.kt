@@ -7,6 +7,8 @@ import java.util.UUID
 interface UserJpaRepository : JpaRepository<UserEntity, Long> {
     fun existsByUsername(username: String): Boolean
 
+    fun findByIdAndDeletedAtIsNull(id: Long): UserEntity?
+
     fun findAllByIdIn(ids: List<Long>): List<UserEntity>
 
     fun findByUuid(uuid: UUID): UserEntity?

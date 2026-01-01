@@ -12,6 +12,9 @@ import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.Unaut
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonException
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
 import dev.maldallija.maldallijabe.season.domain.exception.UnauthorizedSeasonOperationException
+import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentException
+import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentNotFoundException
+import dev.maldallija.maldallijabe.season.enrollment.domain.exception.UnauthorizedSeasonEnrollmentOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
@@ -213,13 +216,72 @@ class GlobalExceptionHandler {
             .body(errorResponse)
     }
 
-    @ExceptionHandler(DataIntegrityViolationException::class)
-    fun handleDataIntegrityViolation(e: DataIntegrityViolationException): ResponseEntity<ErrorResponse> {
+    @ExceptionHandler(SeasonEnrollmentNotFoundException::class)
+    fun handleSeasonEnrollmentNotFoundException(e: SeasonEnrollmentNotFoundException): ResponseEntity<ErrorResponse> {
         val errorResponse =
             ErrorResponse(
-                code = "DUPLICATE_USERNAME",
-                message = "Username already exists",
+                code = e.errorCode,
+                message = e.message ?: "Season enrollment not found",
             )
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(UnauthorizedSeasonEnrollmentOperationException::class)
+    fun handleUnauthorizedSeasonEnrollmentOperationException(
+        e: UnauthorizedSeasonEnrollmentOperationException,
+    ): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Forbidden",
+            )
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(SeasonEnrollmentException::class)
+    fun handleSeasonEnrollmentException(e: SeasonEnrollmentException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Season enrollment error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException::class)
+    fun handleDataIntegrityViolation(e: DataIntegrityViolationException): ResponseEntity<ErrorResponse> {
+        val message = e.message ?: ""
+
+        val errorResponse =
+            when {
+                message.contains("season_enrollment") || message.contains("idx_season_enrollment_active_unique") -> {
+                    ErrorResponse(
+                        code = "DUPLICATE_ENROLLMENT",
+                        message = "이미 신청했습니다",
+                    )
+                }
+
+                message.contains("user") || message.contains("username") -> {
+                    ErrorResponse(
+                        code = "DUPLICATE_USERNAME",
+                        message = "Username already exists",
+                    )
+                }
+
+                else -> {
+                    ErrorResponse(
+                        code = "DUPLICATE_DATA",
+                        message = "중복된 데이터입니다",
+                    )
+                }
+            }
+
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
             .body(errorResponse)

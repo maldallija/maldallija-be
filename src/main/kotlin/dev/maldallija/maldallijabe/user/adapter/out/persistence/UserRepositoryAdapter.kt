@@ -15,9 +15,9 @@ class UserRepositoryAdapter(
     override fun existsByUsername(username: String): Boolean = userJpaRepository.existsByUsername(username)
 
     override fun findById(id: Long): User? =
-        userJpaRepository.findById(id).orElse(null)?.let {
-            userMapper.toDomain(it)
-        }
+        userJpaRepository
+            .findByIdAndDeletedAtIsNull(id)
+            ?.let { userMapper.toDomain(it) }
 
     override fun findAllByIdIn(ids: List<Long>): List<User> = userJpaRepository.findAllByIdIn(ids).map { userMapper.toDomain(it) }
 

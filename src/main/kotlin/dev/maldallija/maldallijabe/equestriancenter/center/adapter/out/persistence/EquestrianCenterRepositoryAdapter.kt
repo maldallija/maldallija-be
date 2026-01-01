@@ -24,6 +24,11 @@ class EquestrianCenterRepositoryAdapter(
             equestrianCenterMapper.toDomain(it)
         }
 
+    override fun findById(id: Long): EquestrianCenter? =
+        equestrianCenterJpaRepository.findByIdAndDeletedAtIsNull(id)?.let {
+            equestrianCenterMapper.toDomain(it)
+        }
+
     override fun findAllByIdIn(ids: List<Long>): List<EquestrianCenter> =
         equestrianCenterJpaRepository.findAllByIdInAndDeletedAtIsNull(ids).map {
             equestrianCenterMapper.toDomain(it)

@@ -9,6 +9,8 @@ import java.util.UUID
 interface EquestrianCenterJpaRepository : JpaRepository<EquestrianCenterEntity, Long> {
     fun findByUuidAndDeletedAtIsNull(uuid: UUID): EquestrianCenterEntity?
 
+    fun findByIdAndDeletedAtIsNull(id: Long): EquestrianCenterEntity?
+
     fun findAllByDeletedAtIsNull(pageable: Pageable): Page<EquestrianCenterEntity>
 
     fun findAllByIdInAndDeletedAtIsNull(ids: List<Long>): List<EquestrianCenterEntity>

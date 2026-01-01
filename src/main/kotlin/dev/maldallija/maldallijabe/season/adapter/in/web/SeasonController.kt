@@ -2,9 +2,12 @@ package dev.maldallija.maldallijabe.season.adapter.`in`.web
 
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.CreateSeasonRequest
+import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.EquestrianCenterInfo
+import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonDetailResponse
 import dev.maldallija.maldallijabe.season.adapter.`in`.web.dto.SeasonListResponse
 import dev.maldallija.maldallijabe.season.application.port.`in`.CreateSeasonUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.GetEquestrianCenterSeasonsUseCase
+import dev.maldallija.maldallijabe.season.application.port.`in`.GetSeasonDetailUseCase
 import dev.maldallija.maldallijabe.season.domain.SeasonStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -34,6 +37,7 @@ import java.util.UUID
 class SeasonController(
     private val createSeasonUseCase: CreateSeasonUseCase,
     private val getEquestrianCenterSeasonsUseCase: GetEquestrianCenterSeasonsUseCase,
+    private val getSeasonDetailUseCase: GetSeasonDetailUseCase,
 ) {
     @Operation(summary = "시즌 생성")
     @ApiResponses(
@@ -124,6 +128,53 @@ class SeasonController(
                     status = season.status,
                 )
             }
+
+        return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "승마장 시즌 상세 조회")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "시즌을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @GetMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}")
+    fun getSeasonDetail(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+    ): ResponseEntity<SeasonDetailResponse> {
+        val season =
+            getSeasonDetailUseCase.getSeasonDetail(
+                equestrianCenterUuid = equestrianCenterUuid,
+                seasonUuid = seasonUuid,
+            )
+
+        val response =
+            SeasonDetailResponse(
+                seasonUuid = season.seasonUuid,
+                equestrianCenter =
+                    EquestrianCenterInfo(
+                        uuid = season.equestrianCenterUuid,
+                        name = season.equestrianCenterName,
+                    ),
+                title = season.title,
+                description = season.description,
+                startDate = season.startDate,
+                endDate = season.endDate,
+                capacity = season.capacity,
+                defaultTicketCount = season.defaultTicketCount,
+                status = season.status,
+                createdAt = season.createdAt,
+                updatedAt = season.updatedAt,
+            )
 
         return ResponseEntity.ok(response)
     }

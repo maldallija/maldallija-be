@@ -7,8 +7,11 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDate
+import java.util.UUID
 
 interface SeasonJpaRepository : JpaRepository<SeasonEntity, Long> {
+    fun findByUuidAndDeletedAtIsNull(uuid: UUID): SeasonEntity?
+
     fun findByEquestrianCenterIdAndDeletedAtIsNull(
         equestrianCenterId: Long,
         pageable: Pageable,

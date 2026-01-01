@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
+import java.util.UUID
 
 @Repository
 class SeasonRepositoryAdapter(
@@ -18,6 +19,11 @@ class SeasonRepositoryAdapter(
         val savedEntity = seasonJpaRepository.save(entity)
         return seasonMapper.toDomain(savedEntity)
     }
+
+    override fun findByUuid(uuid: UUID): Season? =
+        seasonJpaRepository
+            .findByUuidAndDeletedAtIsNull(uuid)
+            ?.let { seasonMapper.toDomain(it) }
 
     override fun findByEquestrianCenterIdAndSearchConditions(
         equestrianCenterId: Long,

@@ -17,6 +17,7 @@ data class Season(
     val status: SeasonStatus,
     val createdBy: Long,
     val createdAt: Instant,
+    val updatedBy: Long,
     val updatedAt: Instant,
     val deletedAt: Instant?,
 )

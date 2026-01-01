@@ -215,10 +215,12 @@ CREATE TYPE attendance_status AS ENUM ('ATTENDED', 'NO_SHOW');
 | status | season_status | NOT NULL DEFAULT 'ACTIVE' | ACTIVE / CLOSED |
 | created_by | BIGINT | NOT NULL | 생성한 equestrian_center_staff.id 참조 |
 | created_at | TIMESTAMPTZ | NOT NULL | |
+| updated_by | BIGINT | NOT NULL | 최종 수정자 equestrian_center_staff.id 참조 |
 | updated_at | TIMESTAMPTZ | NOT NULL | |
 | deleted_at | TIMESTAMPTZ | | soft delete |
 
-> 시즌은 센터 단위로 생성
+> - 시즌은 센터 단위로 생성
+> - created_by, updated_by로 생성자와 최종 수정자 추적 (감사 추적)
 
 ---
 
@@ -424,6 +426,7 @@ CREATE INDEX idx_authentication_refresh_session_revoked_at ON authentication_ref
 CREATE INDEX idx_season_uuid ON season(uuid);
 CREATE INDEX idx_season_equestrian_center_id ON season(equestrian_center_id);
 CREATE INDEX idx_season_created_by ON season(created_by);
+CREATE INDEX idx_season_updated_by ON season(updated_by);
 CREATE INDEX idx_season_status ON season(status);
 CREATE INDEX idx_season_deleted_at ON season(deleted_at);
 

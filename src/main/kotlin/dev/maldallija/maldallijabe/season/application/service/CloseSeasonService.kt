@@ -57,6 +57,7 @@ class CloseSeasonService(
         val closedSeason =
             season.copy(
                 status = SeasonStatus.CLOSED,
+                updatedBy = staff.id,
                 updatedAt = Instant.now(),
             )
 

@@ -91,6 +91,7 @@ class UpdateSeasonService(
                 endDate = endDate,
                 capacity = capacity,
                 defaultTicketCount = defaultTicketCount,
+                updatedBy = staff.id,
                 updatedAt = Instant.now(),
             )
 

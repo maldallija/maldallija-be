@@ -42,6 +42,8 @@ class SeasonEntity(
     val createdBy: Long,
     @Column(name = "created_at", nullable = false)
     val createdAt: Instant,
+    @Column(name = "updated_by", nullable = false)
+    val updatedBy: Long,
     @Column(name = "updated_at", nullable = false)
     val updatedAt: Instant,
     @Column(name = "deleted_at")

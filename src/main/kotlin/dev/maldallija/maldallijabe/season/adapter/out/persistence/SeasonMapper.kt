@@ -19,6 +19,7 @@ class SeasonMapper {
             status = entity.status,
             createdBy = entity.createdBy,
             createdAt = entity.createdAt,
+            updatedBy = entity.updatedBy,
             updatedAt = entity.updatedAt,
             deletedAt = entity.deletedAt,
         )
@@ -37,6 +38,7 @@ class SeasonMapper {
             status = domain.status,
             createdBy = domain.createdBy,
             createdAt = domain.createdAt,
+            updatedBy = domain.updatedBy,
             updatedAt = domain.updatedAt,
             deletedAt = domain.deletedAt,
         )

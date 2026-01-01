@@ -80,6 +80,7 @@ class CreateSeasonService(
                 status = SeasonStatus.ACTIVE,
                 createdBy = staff.id,
                 createdAt = now,
+                updatedBy = staff.id,
                 updatedAt = now,
                 deletedAt = null,
             )

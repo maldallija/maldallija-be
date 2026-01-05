@@ -36,3 +36,9 @@ class UnauthorizedSeasonEnrollmentOperationException :
         errorCode = "UNAUTHORIZED_SEASON_ENROLLMENT_OPERATION",
         message = "시즌 참여 신청 작업 권한이 없습니다.",
     )
+
+class InvalidEnrollmentStatusException :
+    SeasonEnrollmentException(
+        errorCode = "INVALID_ENROLLMENT_STATUS",
+        message = "참여 신청 상태가 올바르지 않습니다.",
+    )

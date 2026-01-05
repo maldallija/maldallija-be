@@ -15,6 +15,8 @@ import dev.maldallija.maldallijabe.season.domain.exception.UnauthorizedSeasonOpe
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentNotFoundException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.UnauthorizedSeasonEnrollmentOperationException
+import dev.maldallija.maldallijabe.season.ticketaccount.domain.exception.SeasonTicketAccountException
+import dev.maldallija.maldallijabe.ticketlog.domain.exception.TicketLogException
 import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
 import dev.maldallija.maldallijabe.user.domain.exception.UserNotFoundException
@@ -254,6 +256,30 @@ class GlobalExceptionHandler {
             .body(errorResponse)
     }
 
+    @ExceptionHandler(SeasonTicketAccountException::class)
+    fun handleSeasonTicketAccountException(e: SeasonTicketAccountException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Season ticket account error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(TicketLogException::class)
+    fun handleTicketLogException(e: TicketLogException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Ticket log error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
     @ExceptionHandler(DataIntegrityViolationException::class)
     fun handleDataIntegrityViolation(e: DataIntegrityViolationException): ResponseEntity<ErrorResponse> {
         val message = e.message ?: ""
@@ -264,6 +290,13 @@ class GlobalExceptionHandler {
                     ErrorResponse(
                         code = "DUPLICATE_ENROLLMENT",
                         message = "이미 신청했습니다",
+                    )
+                }
+
+                message.contains("season_ticket_account") -> {
+                    ErrorResponse(
+                        code = "DUPLICATE_TICKET_ACCOUNT",
+                        message = "이미 티켓 계좌가 존재합니다",
                     )
                 }
 

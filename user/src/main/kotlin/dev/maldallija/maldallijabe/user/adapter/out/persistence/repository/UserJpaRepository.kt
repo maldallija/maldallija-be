@@ -5,13 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.util.UUID
 
 interface UserJpaRepository : JpaRepository<UserEntity, Long> {
-    fun existsByUsername(username: String): Boolean
+    fun existsByUsernameAndDeletedAtIsNull(username: String): Boolean
 
     fun findByIdAndDeletedAtIsNull(id: Long): UserEntity?
 
-    fun findAllByIdIn(ids: List<Long>): List<UserEntity>
+    fun findAllByIdInAndDeletedAtIsNull(ids: List<Long>): List<UserEntity>
 
-    fun findByUuid(uuid: UUID): UserEntity?
+    fun findByUuidAndDeletedAtIsNull(uuid: UUID): UserEntity?
 
-    fun findByUsername(username: String): UserEntity?
+    fun findByUsernameAndDeletedAtIsNull(username: String): UserEntity?
 }

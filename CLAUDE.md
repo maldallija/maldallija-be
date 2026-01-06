@@ -289,26 +289,29 @@ dev.maldallija.maldallijabe
   ```
 
 #### Exception Hierarchy
-- **3-tier structure**: `RuntimeException` → `BaseException` (abstract) → Domain Exception (sealed)
-- `BaseException`: Abstract class with `errorCode` and `message` fields
+- **2-tier structure**: `RuntimeException` → Domain Exception (sealed)
+- Each module defines its own exception hierarchy (complete independence)
 - Domain Exceptions: Sealed classes for exhaustive type checking
   - `UserException`, `AuthException`, `EquestrianCenterException`, `EquestrianCenterInvitationException`
 - Benefits:
   - Compile-time exhaustive checking with sealed classes
-  - Centralized errorCode management
+  - Complete module independence (no shared base class)
+  - Easy MSA migration (no common dependency)
   - Type-safe error handling in when expressions
 - Example:
   ```kotlin
-  abstract class BaseException(
+  // Each module defines its own exception independently
+  sealed class UserException(
       val errorCode: String,
       message: String,
   ) : RuntimeException(message)
 
-  sealed class UserException(
-      errorCode: String,
+  sealed class AuthException(
+      val errorCode: String,
       message: String,
-  ) : BaseException(errorCode, message)
+  ) : RuntimeException(message)
   ```
+- Note: 3-line duplication < module independence (MSA-ready)
 
 ## Related Documents
 
@@ -385,6 +388,35 @@ dev.maldallija.maldallijabe
   - Public API: Season list/detail accessible without authentication
   - Phase 5 concern: Lesson date range validation (documented in MEMO.md)
 
+- **SeasonEnrollment** (Phase 3) - 4/4 endpoints
+  - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/enrollments (참여 신청)
+  - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/enrollments (신청 목록 조회, 직원용)
+  - POST /{centerUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/approve (승인, 직원용)
+  - POST /{centerUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/reject (거절, 직원용)
+  - Status tracking: PENDING → APPROVED / REJECTED
+  - SeasonEnrollmentLog: Automatic log creation on approve/reject (APPROVED/REJECTED types)
+  - Authorization: Staff permission required for list/approve/reject
+  - Approval logic (12 steps):
+    - Season capacity check (countBySeasonIdAndStatus)
+    - SeasonTicketAccount creation (balance = season.defaultTicketCount)
+    - TicketLog creation (GRANT type, grantedBy = staff.id)
+  - Rejection logic (9 steps):
+    - Status change + SeasonEnrollmentLog creation (note field for rejection reason)
+  - N+1 prevention with batch fetching for member details
+
+- **SeasonTicketAccount & TicketLog** (Phase 3/4 partial)
+  - SeasonTicketAccount domain + persistence layer completed
+    - Domain: SeasonTicketAccount (id, seasonId, memberId, balance, timestamps)
+    - Repository: save, findBySeasonIdAndMemberId, existsBySeasonIdAndMemberId
+    - Created on enrollment approval with default ticket count
+  - TicketLog domain + persistence layer completed
+    - Domain: TicketLog (id, accountId, amount, type, description, reservationId, grantedBy, createdAt)
+    - TicketLogType enum: GRANT, USE, REFUND, ADDITIONAL
+    - Repository: save (query methods to be added in Phase 4)
+    - GRANT log created on enrollment approval
+  - Exception handling: SeasonTicketAccountException, TicketLogException
+  - GlobalExceptionHandler: DataIntegrityViolationException for duplicate ticket account
+
 ### In Progress
 - **User domain** (Phase 1) - Migration needed
   - Domain: `User.kt` (has old `role` field, needs `is_system_admin`)
@@ -392,12 +424,10 @@ dev.maldallija.maldallijabe
   - TODO: Migrate to new structure (remove role, add is_system_admin)
 
 ### Not Implemented Yet
-- **SeasonEnrollment** (Phase 3)
-  - SeasonEnrollment - apply, approve/reject with status tracking
-  - SeasonEnrollmentLog - enrollment history timeline
-- **Ticket system** (Phase 4)
-  - SeasonTicketAccount - balance per season-member
-  - TicketLog - transaction history with account reference
+- **Ticket system APIs** (Phase 4 remaining)
+  - Grant additional tickets API (Staff → Member)
+  - View ticket balance API (Member, self-only)
+  - View ticket log API (Member, self-only)
 - **Lesson + Assignment** (Phase 5)
   - Lesson - CRUD, status, time validation
   - LessonInstructor - instructor assignment (N:M with InstructorGroupMember)
@@ -417,8 +447,9 @@ dev.maldallija.maldallijabe
 5. ~~EquestrianCenter Invitation System~~ COMPLETED (Phase 2B)
 6. ~~EquestrianCenterStaff Management~~ COMPLETED (Phase 2C)
 7. ~~Season CRUD~~ COMPLETED (Phase 3 - API #1-5)
-8. Implement SeasonEnrollment (apply, approve/reject, enrollment log) (Phase 3 remaining)
-9. Continue with Ticket → Lesson → Reservation → Attendance (Phase 4-6)
+8. ~~Implement SeasonEnrollment (apply, approve/reject, enrollment log)~~ COMPLETED (Phase 3 - 4/4 endpoints)
+9. ~~Implement SeasonTicketAccount & TicketLog domain + persistence~~ COMPLETED (Phase 3/4 partial)
+10. Continue with Ticket APIs → Lesson → Reservation → Attendance (Phase 4-6)
 
 ## Development Log
 
@@ -1060,3 +1091,81 @@ After:  EquestrianCenterStaff
 - Updated Next Steps: Removed completed Phase 2 items, strikethrough formatting
 - Verified all endpoints exist: UseCases, Services, Controllers, DTOs
 - Phase 1-2 fully completed, Phase 3 (Season + Enrollment) is next priority
+
+### 2026-01-05: Phase 3 completion - SeasonEnrollment + Ticket domain implementation
+
+**Phase 3: SeasonEnrollment completion (4/4 endpoints):**
+- All enrollment endpoints implemented and verified:
+  - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/enrollments (참여 신청)
+  - GET /{centerUuid}/seasons/{seasonUuid}/enrollments (신청 목록 조회, 직원용, 페이징/필터링)
+  - POST /{centerUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/approve (승인, 직원용)
+  - POST /{centerUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/reject (거절, 직원용)
+
+**Approve API implementation (12-step logic):**
+1. 승마장 존재 확인
+2. 시즌 조회
+3. 시즌-승마장 매칭 검증
+4. Staff 권한 확인
+5. SeasonEnrollment 조회
+6. Enrollment-시즌 매칭 검증
+7. PENDING 상태 확인
+8. **시즌 정원 체크** (countBySeasonIdAndStatus 사용)
+9. PENDING → APPROVED 전환
+10. SeasonEnrollmentLog 생성 (APPROVED)
+11. **SeasonTicketAccount 생성** (balance = season.defaultTicketCount)
+12. **TicketLog 생성** (GRANT, grantedBy = staff.id)
+
+**Reject API implementation (9-step logic):**
+1-7. Approve와 동일한 검증
+8. PENDING → REJECTED 전환
+9. SeasonEnrollmentLog 생성 (REJECTED, note 포함)
+
+**SeasonTicketAccount domain + persistence layer:**
+- Domain: `SeasonTicketAccount.kt` (id, seasonId, memberId, balance, createdAt, updatedAt)
+- Entity: `SeasonTicketAccountEntity.kt` with UNIQUE(season_id, member_id)
+- Mapper: `SeasonTicketAccountMapper.kt`
+- JpaRepository: `SeasonTicketAccountJpaRepository.kt`
+  - findBySeasonIdAndMemberId, existsBySeasonIdAndMemberId
+- RepositoryAdapter: `SeasonTicketAccountRepositoryAdapter.kt`
+- Exceptions: `SeasonTicketAccountException` (sealed), DuplicateTicketAccountException, TicketAccountNotFoundException
+
+**TicketLog domain + persistence layer:**
+- Domain: `TicketLog.kt` (id, accountId, amount, type, description, reservationId, grantedBy, createdAt)
+- TicketLogType enum: GRANT, USE, REFUND, ADDITIONAL
+- Entity: `TicketLogEntity.kt` with @Enumerated(EnumType.STRING)
+- Mapper: `TicketLogMapper.kt`
+- JpaRepository: `TicketLogJpaRepository.kt` (basic save only, query methods deferred to Phase 4)
+- RepositoryAdapter: `TicketLogRepositoryAdapter.kt`
+- Exceptions: `TicketLogException` (sealed), TicketLogNotFoundException
+
+**GlobalExceptionHandler updates:**
+- Added `SeasonTicketAccountException` handler → 400 BAD_REQUEST
+- Added `TicketLogException` handler → 400 BAD_REQUEST
+- DataIntegrityViolationException: Added season_ticket_account duplicate check → 409 CONFLICT
+
+**Key technical decisions:**
+- **No pessimistic locking**: Low-concurrency staff operations don't need database locking
+- **No note field for approval**: Approval process doesn't require notes (only rejection does)
+- **Repository method naming**: `countBySeasonIdAndStatus` properly implemented across all layers
+- **Audit tracking**: `grantedBy` references equestrian_center_staff.id, `actorId` references user.id
+
+**Code quality:**
+- Multiple review cycles ensuring 100% accuracy
+- All Repository methods verified (countBySeasonIdAndStatus, findBySeasonIdAndMemberId, etc.)
+- Full hexagonal architecture compliance
+- Entity immutability maintained (all fields `val`)
+- Sealed class exception hierarchy
+- Full naming convention compliance
+
+**Files created (20 files):**
+- SeasonTicketAccount: Domain, Exception (3), Repository (port), Entity, Mapper, JpaRepository, RepositoryAdapter
+- TicketLog: Domain, TicketLogType enum, Exception (2), Repository (port), Entity, Mapper, JpaRepository, RepositoryAdapter
+- Enrollment APIs: ApproveSeasonEnrollmentUseCase, ApproveSeasonEnrollmentService, RejectSeasonEnrollmentUseCase, RejectSeasonEnrollmentService, RejectSeasonEnrollmentRequest DTO
+
+**Documentation updated:**
+- CLAUDE.md Current Implementation Status:
+  - Added SeasonEnrollment (4/4 endpoints) to Completed section
+  - Added SeasonTicketAccount & TicketLog to Completed section
+  - Updated "Not Implemented Yet" to reflect Phase 4 remaining work
+  - Updated Next Steps: 8, 9 marked complete, added step 10
+- Phase 3 (Season + Enrollment) fully completed, ready for Phase 4 (Ticket APIs)

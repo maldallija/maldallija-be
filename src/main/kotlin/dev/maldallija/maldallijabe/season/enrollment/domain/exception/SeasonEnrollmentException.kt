@@ -42,3 +42,9 @@ class InvalidEnrollmentStatusException :
         errorCode = "INVALID_ENROLLMENT_STATUS",
         message = "참여 신청 상태가 올바르지 않습니다.",
     )
+
+class CannotProcessEnrollmentForClosedSeasonException :
+    SeasonEnrollmentException(
+        errorCode = "CANNOT_PROCESS_ENROLLMENT_FOR_CLOSED_SEASON",
+        message = "종료된 시즌의 참여 신청은 처리할 수 없습니다.",
+    )

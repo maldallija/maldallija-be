@@ -4,10 +4,12 @@ import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.
 import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
 import dev.maldallija.maldallijabe.season.application.port.out.SeasonRepository
+import dev.maldallija.maldallijabe.season.domain.SeasonStatus
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
 import dev.maldallija.maldallijabe.season.enrollment.application.port.`in`.RejectSeasonEnrollmentUseCase
 import dev.maldallija.maldallijabe.season.enrollment.application.port.out.SeasonEnrollmentRepository
 import dev.maldallija.maldallijabe.season.enrollment.domain.EnrollmentStatus
+import dev.maldallija.maldallijabe.season.enrollment.domain.exception.CannotProcessEnrollmentForClosedSeasonException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.InvalidEnrollmentStatusException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentNotFoundException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.UnauthorizedSeasonEnrollmentOperationException
@@ -50,28 +52,33 @@ class RejectSeasonEnrollmentService(
             throw SeasonNotFoundException()
         }
 
-        // 4. Staff 권한 확인
+        // 4. 시즌 상태 확인 (ACTIVE만 허용)
+        if (season.status != SeasonStatus.ACTIVE) {
+            throw CannotProcessEnrollmentForClosedSeasonException()
+        }
+
+        // 5. Staff 권한 확인
         equestrianCenterStaffRepository.findActiveByEquestrianCenterIdAndUserId(
             equestrianCenterId = equestrianCenter.id,
             userId = requestingUserId,
         ) ?: throw UnauthorizedSeasonEnrollmentOperationException()
 
-        // 5. SeasonEnrollment 조회
+        // 6. SeasonEnrollment 조회
         val enrollment =
             seasonEnrollmentRepository.findByUuid(enrollmentUuid)
                 ?: throw SeasonEnrollmentNotFoundException()
 
-        // 6. Enrollment이 해당 시즌에 속하는지 확인
+        // 7. Enrollment이 해당 시즌에 속하는지 확인
         if (enrollment.seasonId != season.id) {
             throw SeasonEnrollmentNotFoundException()
         }
 
-        // 7. 상태가 PENDING인지 확인
+        // 8. 상태가 PENDING인지 확인
         if (enrollment.enrollmentStatus != EnrollmentStatus.PENDING) {
             throw InvalidEnrollmentStatusException()
         }
 
-        // 8. PENDING → REJECTED 전환
+        // 9. PENDING → REJECTED 전환
         val now = Instant.now()
         val rejectedEnrollment =
             enrollment.copy(
@@ -80,7 +87,7 @@ class RejectSeasonEnrollmentService(
             )
         seasonEnrollmentRepository.save(rejectedEnrollment)
 
-        // 9. SeasonEnrollmentLog 생성 (REJECTED)
+        // 10. SeasonEnrollmentLog 생성 (REJECTED)
         val enrollmentLog =
             SeasonEnrollmentLog(
                 id = 0L,

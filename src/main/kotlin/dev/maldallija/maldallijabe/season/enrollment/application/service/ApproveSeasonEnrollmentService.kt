@@ -4,10 +4,12 @@ import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.
 import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
 import dev.maldallija.maldallijabe.season.application.port.out.SeasonRepository
+import dev.maldallija.maldallijabe.season.domain.SeasonStatus
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
 import dev.maldallija.maldallijabe.season.enrollment.application.port.`in`.ApproveSeasonEnrollmentUseCase
 import dev.maldallija.maldallijabe.season.enrollment.application.port.out.SeasonEnrollmentRepository
 import dev.maldallija.maldallijabe.season.enrollment.domain.EnrollmentStatus
+import dev.maldallija.maldallijabe.season.enrollment.domain.exception.CannotProcessEnrollmentForClosedSeasonException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.InvalidEnrollmentStatusException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonCapacityExceededException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentNotFoundException
@@ -57,29 +59,34 @@ class ApproveSeasonEnrollmentService(
             throw SeasonNotFoundException()
         }
 
-        // 4. Staff 권한 확인
+        // 4. 시즌 상태 확인 (ACTIVE만 허용)
+        if (season.status != SeasonStatus.ACTIVE) {
+            throw CannotProcessEnrollmentForClosedSeasonException()
+        }
+
+        // 5. Staff 권한 확인
         val staff =
             equestrianCenterStaffRepository.findActiveByEquestrianCenterIdAndUserId(
                 equestrianCenterId = equestrianCenter.id,
                 userId = requestingUserId,
             ) ?: throw UnauthorizedSeasonEnrollmentOperationException()
 
-        // 5. SeasonEnrollment 조회
+        // 6. SeasonEnrollment 조회
         val enrollment =
             seasonEnrollmentRepository.findByUuid(enrollmentUuid)
                 ?: throw SeasonEnrollmentNotFoundException()
 
-        // 6. Enrollment이 해당 시즌에 속하는지 확인
+        // 7. Enrollment이 해당 시즌에 속하는지 확인
         if (enrollment.seasonId != season.id) {
             throw SeasonEnrollmentNotFoundException()
         }
 
-        // 7. 상태가 PENDING인지 확인
+        // 8. 상태가 PENDING인지 확인
         if (enrollment.enrollmentStatus != EnrollmentStatus.PENDING) {
             throw InvalidEnrollmentStatusException()
         }
 
-        // 8. 시즌 정원 체크
+        // 9. 시즌 정원 체크
         val currentApprovedCount =
             seasonEnrollmentRepository.countBySeasonIdAndStatus(
                 seasonId = season.id,
@@ -89,7 +96,7 @@ class ApproveSeasonEnrollmentService(
             throw SeasonCapacityExceededException()
         }
 
-        // 9. PENDING → APPROVED 전환
+        // 10. PENDING → APPROVED 전환
         val now = Instant.now()
         val approvedEnrollment =
             enrollment.copy(
@@ -98,7 +105,7 @@ class ApproveSeasonEnrollmentService(
             )
         seasonEnrollmentRepository.save(approvedEnrollment)
 
-        // 10. SeasonEnrollmentLog 생성 (APPROVED)
+        // 11. SeasonEnrollmentLog 생성 (APPROVED)
         val enrollmentLog =
             SeasonEnrollmentLog(
                 id = 0L,
@@ -110,7 +117,7 @@ class ApproveSeasonEnrollmentService(
             )
         seasonEnrollmentLogRepository.save(enrollmentLog)
 
-        // 11. SeasonTicketAccount 생성
+        // 12. SeasonTicketAccount 생성
         val ticketAccount =
             SeasonTicketAccount(
                 id = 0L,
@@ -122,7 +129,7 @@ class ApproveSeasonEnrollmentService(
             )
         val savedTicketAccount = seasonTicketAccountRepository.save(ticketAccount)
 
-        // 12. TicketLog 생성 (GRANT)
+        // 13. TicketLog 생성 (GRANT)
         val ticketLog =
             TicketLog(
                 id = 0L,

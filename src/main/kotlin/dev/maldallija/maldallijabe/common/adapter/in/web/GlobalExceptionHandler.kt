@@ -16,6 +16,7 @@ import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnro
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnrollmentNotFoundException
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.UnauthorizedSeasonEnrollmentOperationException
 import dev.maldallija.maldallijabe.season.ticketaccount.domain.exception.SeasonTicketAccountException
+import dev.maldallija.maldallijabe.season.ticketaccount.domain.exception.TicketAccountNotFoundException
 import dev.maldallija.maldallijabe.ticketlog.domain.exception.TicketLogException
 import dev.maldallija.maldallijabe.user.domain.exception.UnauthorizedUserOperationException
 import dev.maldallija.maldallijabe.user.domain.exception.UserException
@@ -253,6 +254,18 @@ class GlobalExceptionHandler {
             )
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(TicketAccountNotFoundException::class)
+    fun handleTicketAccountNotFoundException(e: TicketAccountNotFoundException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Ticket account not found",
+            )
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
             .body(errorResponse)
     }
 

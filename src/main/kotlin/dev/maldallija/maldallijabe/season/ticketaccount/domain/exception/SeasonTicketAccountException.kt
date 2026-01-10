@@ -18,3 +18,9 @@ class TicketAccountNotFoundException :
         errorCode = "TICKET_ACCOUNT_NOT_FOUND",
         message = "Ticket account not found",
     )
+
+class InvalidTicketAmountException :
+    SeasonTicketAccountException(
+        errorCode = "INVALID_TICKET_AMOUNT",
+        message = "Ticket amount must be greater than zero",
+    )

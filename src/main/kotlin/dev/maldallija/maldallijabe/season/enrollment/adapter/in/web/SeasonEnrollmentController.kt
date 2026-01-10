@@ -8,6 +8,8 @@ import dev.maldallija.maldallijabe.season.enrollment.application.port.`in`.Appro
 import dev.maldallija.maldallijabe.season.enrollment.application.port.`in`.GetSeasonEnrollmentsUseCase
 import dev.maldallija.maldallijabe.season.enrollment.application.port.`in`.RejectSeasonEnrollmentUseCase
 import dev.maldallija.maldallijabe.season.enrollment.domain.EnrollmentStatus
+import dev.maldallija.maldallijabe.season.ticketaccount.adapter.`in`.web.dto.GrantAdditionalTicketsRequest
+import dev.maldallija.maldallijabe.season.ticketaccount.application.port.`in`.GrantAdditionalTicketsUseCase
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Page
@@ -32,6 +34,7 @@ class SeasonEnrollmentController(
     private val getSeasonEnrollmentsUseCase: GetSeasonEnrollmentsUseCase,
     private val approveSeasonEnrollmentUseCase: ApproveSeasonEnrollmentUseCase,
     private val rejectSeasonEnrollmentUseCase: RejectSeasonEnrollmentUseCase,
+    private val grantAdditionalTicketsUseCase: GrantAdditionalTicketsUseCase,
 ) {
     @Operation(summary = "승마장 시즌 참여 신청", description = "시즌에 참여 신청합니다.")
     @PostMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/enrollments")
@@ -115,6 +118,26 @@ class SeasonEnrollmentController(
             enrollmentUuid = enrollmentUuid,
             requestingUserId = requestingUserId,
             note = request.note,
+        )
+        return ResponseEntity.noContent().build()
+    }
+
+    @Operation(summary = "추가 티켓 부여", description = "승인된 회원에게 추가 티켓을 부여합니다 (직원용)")
+    @PostMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/tickets")
+    fun grantAdditionalTickets(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @PathVariable enrollmentUuid: UUID,
+        @AuthenticationPrincipal requestingUserId: Long,
+        @RequestBody request: GrantAdditionalTicketsRequest,
+    ): ResponseEntity<Void> {
+        grantAdditionalTicketsUseCase.grantAdditionalTickets(
+            equestrianCenterUuid = equestrianCenterUuid,
+            seasonUuid = seasonUuid,
+            enrollmentUuid = enrollmentUuid,
+            requestingUserId = requestingUserId,
+            amount = request.amount,
+            description = request.description,
         )
         return ResponseEntity.noContent().build()
     }

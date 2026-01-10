@@ -4,6 +4,7 @@ import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.
 import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
 import dev.maldallija.maldallijabe.season.application.port.out.SeasonRepository
+import dev.maldallija.maldallijabe.season.domain.SeasonStatus
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
 import dev.maldallija.maldallijabe.season.enrollment.application.port.out.SeasonEnrollmentRepository
 import dev.maldallija.maldallijabe.season.enrollment.domain.EnrollmentStatus
@@ -12,6 +13,7 @@ import dev.maldallija.maldallijabe.season.enrollment.domain.exception.SeasonEnro
 import dev.maldallija.maldallijabe.season.enrollment.domain.exception.UnauthorizedSeasonEnrollmentOperationException
 import dev.maldallija.maldallijabe.season.ticketaccount.application.port.`in`.GrantAdditionalTicketsUseCase
 import dev.maldallija.maldallijabe.season.ticketaccount.application.port.out.SeasonTicketAccountRepository
+import dev.maldallija.maldallijabe.season.ticketaccount.domain.exception.CannotGrantTicketsToClosedSeasonException
 import dev.maldallija.maldallijabe.season.ticketaccount.domain.exception.InvalidTicketAmountException
 import dev.maldallija.maldallijabe.season.ticketaccount.domain.exception.TicketAccountNotFoundException
 import dev.maldallija.maldallijabe.ticketlog.application.port.out.TicketLogRepository
@@ -60,36 +62,41 @@ class GrantAdditionalTicketsService(
             throw SeasonNotFoundException()
         }
 
-        // 5. Staff 권한 확인
+        // 5. 시즌 상태 확인 (ACTIVE만 허용)
+        if (season.status != SeasonStatus.ACTIVE) {
+            throw CannotGrantTicketsToClosedSeasonException()
+        }
+
+        // 6. Staff 권한 확인
         val staff =
             equestrianCenterStaffRepository.findActiveByEquestrianCenterIdAndUserId(
                 equestrianCenterId = equestrianCenter.id,
                 userId = requestingUserId,
             ) ?: throw UnauthorizedSeasonEnrollmentOperationException()
 
-        // 6. SeasonEnrollment 조회
+        // 7. SeasonEnrollment 조회
         val enrollment =
             seasonEnrollmentRepository.findByUuid(enrollmentUuid)
                 ?: throw SeasonEnrollmentNotFoundException()
 
-        // 7. Enrollment이 해당 시즌에 속하는지 확인
+        // 8. Enrollment이 해당 시즌에 속하는지 확인
         if (enrollment.seasonId != season.id) {
             throw SeasonEnrollmentNotFoundException()
         }
 
-        // 8. 상태가 APPROVED인지 확인 (승인된 회원만 티켓 부여 가능)
+        // 9. 상태가 APPROVED인지 확인 (승인된 회원만 티켓 부여 가능)
         if (enrollment.enrollmentStatus != EnrollmentStatus.APPROVED) {
             throw InvalidEnrollmentStatusException()
         }
 
-        // 9. SeasonTicketAccount 조회
+        // 10. SeasonTicketAccount 조회
         val ticketAccount =
             seasonTicketAccountRepository.findBySeasonIdAndMemberId(
                 seasonId = season.id,
                 memberId = enrollment.memberId,
             ) ?: throw TicketAccountNotFoundException()
 
-        // 10. 잔액 업데이트 (불변 Entity → 새 인스턴스 생성 후 저장)
+        // 11. 잔액 업데이트 (불변 Entity → 새 인스턴스 생성 후 저장)
         val now = Instant.now()
         val updatedTicketAccount =
             ticketAccount.copy(
@@ -98,7 +105,7 @@ class GrantAdditionalTicketsService(
             )
         seasonTicketAccountRepository.save(updatedTicketAccount)
 
-        // 11. TicketLog 생성 (ADDITIONAL)
+        // 12. TicketLog 생성 (ADDITIONAL)
         val ticketLog =
             TicketLog(
                 id = 0L,

@@ -24,3 +24,9 @@ class InvalidTicketAmountException :
         errorCode = "INVALID_TICKET_AMOUNT",
         message = "Ticket amount must be greater than zero",
     )
+
+class CannotGrantTicketsToClosedSeasonException :
+    SeasonTicketAccountException(
+        errorCode = "CANNOT_GRANT_TICKETS_TO_CLOSED_SEASON",
+        message = "Cannot grant tickets to a closed season",
+    )

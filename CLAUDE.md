@@ -183,7 +183,7 @@ The project uses `allOpen` plugin for JPA entities - classes annotated with `@En
   - Cannot re-invite while INVITED status exists (prevent spam)
   - Leave/expulsion supported, re-join creates new staff record
   - Representative change: updates representative_user_id, previous representative remains as staff
-- No waitlist, no horse assignment, no level system (see docs/MEMO.md for future ideas)
+- No waitlist, no horse assignment, no level system (see docs/ROADMAP.md for future ideas)
 
 ### Capacity & Concurrency
 - **Season enrollment count**: Calculated via COUNT query (no actual column)
@@ -398,7 +398,7 @@ dev.maldallija.maldallijabe
     - defaultTicketCount behavior (snapshot at enrollment approval time)
     - CLOSED seasons cannot be reopened (create new season instead)
   - Public API: Season list/detail accessible without authentication
-  - Phase 5 concern: Lesson date range validation (documented in MEMO.md)
+  - Phase 5 concern: Lesson date range validation (documented in ROADMAP.md)
 
 - **SeasonEnrollment** (Phase 3) - 4/4 endpoints
   - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/enrollments (참여 신청)
@@ -416,16 +416,19 @@ dev.maldallija.maldallijabe
     - Status change + SeasonEnrollmentLog creation (note field for rejection reason)
   - N+1 prevention with batch fetching for member details
 
-- **SeasonTicketAccount & TicketLog** (Phase 3/4 partial)
-  - SeasonTicketAccount domain + persistence layer completed
+- **SeasonTicketAccount & TicketLog** (Phase 4) ✅ COMPLETED
+  - SeasonTicketAccount domain + persistence layer
     - Domain: SeasonTicketAccount (id, seasonId, memberId, balance, timestamps)
     - Repository: save, findBySeasonIdAndMemberId, existsBySeasonIdAndMemberId
     - Created on enrollment approval with default ticket count
-  - TicketLog domain + persistence layer completed
+  - TicketLog domain + persistence layer
     - Domain: TicketLog (id, accountId, amount, type, description, reservationId, grantedBy, createdAt)
     - TicketLogType enum: GRANT, USE, REFUND, ADDITIONAL
-    - Repository: save (query methods to be added in Phase 4)
     - GRANT log created on enrollment approval
+  - Ticket APIs (3 endpoints):
+    - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/tickets (추가 티켓 부여)
+    - GET /api/v1/users/{userUuid}/seasons/{seasonUuid}/ticket-account (티켓 잔액 조회)
+    - GET /api/v1/users/{userUuid}/seasons/{seasonUuid}/ticket-logs (티켓 로그 조회)
   - Exception handling: SeasonTicketAccountException, TicketLogException
   - GlobalExceptionHandler: DataIntegrityViolationException for duplicate ticket account
 
@@ -439,23 +442,17 @@ dev.maldallija.maldallijabe
   - Dependency: app → user (unidirectional)
 
 ### Not Implemented Yet
-- **Auth Module Separation** (Phase 1 Step 2)
-  - AuthException refactoring (remove BaseException, extend RuntimeException)
-  - Create auth/ module + build.gradle.kts
-  - Move auth files to auth module
-  - Update settings.gradle.kts
-- **Ticket system APIs** (Phase 4 remaining)
-  - Grant additional tickets API (Staff → Member)
-  - View ticket balance API (Member, self-only)
-  - View ticket log API (Member, self-only)
 - **Lesson + Assignment** (Phase 5)
   - Lesson - CRUD, status, time validation
-  - LessonInstructor - instructor assignment (N:M with InstructorGroupMember)
+  - LessonInstructor - instructor assignment (N:M with EquestrianCenterStaff)
+  - UpdateSeasonService - Lesson date range validation
 - **Reservation + Attendance** (Phase 6)
   - Reservation - booking, cancellation, ticket account reference
   - LessonAttendance - attendance tracking with checker info
 - **Admin features** (Phase 7) - TBD
-- **Spring Security** - authentication/authorization filters
+- **Auth Module Separation** (Post-MVP)
+  - AuthException refactoring (remove BaseException, extend RuntimeException)
+  - Create auth/ module + build.gradle.kts
 - **Tests** - unit/integration tests not written yet
 
 ## Next Steps
@@ -468,8 +465,9 @@ dev.maldallija.maldallijabe
 6. ~~EquestrianCenterStaff Management~~ COMPLETED (Phase 2C)
 7. ~~Season CRUD~~ COMPLETED (Phase 3 - API #1-5)
 8. ~~Implement SeasonEnrollment (apply, approve/reject, enrollment log)~~ COMPLETED (Phase 3 - 4/4 endpoints)
-9. ~~Implement SeasonTicketAccount & TicketLog domain + persistence~~ COMPLETED (Phase 3/4 partial)
-10. Continue with Ticket APIs → Lesson → Reservation → Attendance (Phase 4-6)
+9. ~~Implement SeasonTicketAccount & TicketLog APIs~~ COMPLETED (Phase 4)
+10. Implement Lesson + LessonInstructor (Phase 5)
+11. Implement Reservation + LessonAttendance (Phase 6)
 
 ## Development Log
 

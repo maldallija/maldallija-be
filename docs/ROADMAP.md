@@ -148,25 +148,34 @@ This document defines role-based features, development phases, and future enhanc
 
 9. **SeasonEnrollmentLog** - Enrollment status change history (APPLIED/REAPPLIED/APPROVED/REJECTED/WITHDRAWN)
 
-### Phase 4: Ticket System (Partial ✅, Remaining APIs)
+### Phase 4: Ticket System ✅ COMPLETED
 10. **SeasonTicketAccount** - Per-season member ticket account (created on APPROVED) ✅
 11. **TicketLog** - Transaction history (GRANT/USE/REFUND/ADDITIONAL), granted_by = equestrian_center_staff.id ✅
-    - Remaining APIs:
-      - Grant additional tickets (Staff → Member)
-      - View ticket balance (Member, self-only)
-      - View ticket log (Member, self-only)
+    - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/enrollments/{enrollmentUuid}/tickets (Grant additional tickets) ✅
+    - GET /api/v1/users/{userUuid}/seasons/{seasonUuid}/ticket-account (View ticket balance) ✅
+    - GET /api/v1/users/{userUuid}/seasons/{seasonUuid}/ticket-logs (View ticket logs) ✅
 
 ### Phase 5: Lesson
 12. **Lesson** - CRUD, status management, time validation (created_by = equestrian_center_staff.id)
+    - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 생성 + 강사 배정)
+    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 목록)
+    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 상세)
+    - PATCH /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 수정)
+    - PATCH .../lessons/{lessonUuid}/cancel (레슨 취소 + 예약자 환불)
+    - Validation: Season must be ACTIVE, lessonDate within season period
 13. **LessonInstructor** - Lesson-staff assignment (N:M, references equestrian_center_staff.id)
+    - MVP: Assigned during lesson create/update (full replacement)
+    - Post-MVP: Separate add/remove instructor APIs
+14. **UpdateSeasonService Enhancement** - Lesson date range validation
+    - Reject season date update if existing lessons fall outside new range
 
 ### Phase 6: Reservation & Attendance
-14. **Reservation** - Book/cancel, ticket deduction/refund (references season_ticket_account_id)
-15. **LessonAttendance** - Attendance check (checked_by = equestrian_center_staff.id, checked_at recorded)
+15. **Reservation** - Book/cancel, ticket deduction/refund (references season_ticket_account_id)
+16. **LessonAttendance** - Attendance check (checked_by = equestrian_center_staff.id, checked_at recorded)
 
 ### Phase 7: Admin & Post-MVP
-16. **Admin Features** - System admin UI, equestrian center management, global views (TBD)
-17. **Permission System** - Role-based permission management (Post-MVP RBAC implementation)
+17. **Admin Features** - System admin UI, equestrian center management, global views (TBD)
+18. **Permission System** - Role-based permission management (Post-MVP RBAC implementation)
 
 ---
 
@@ -218,31 +227,24 @@ This document defines role-based features, development phases, and future enhanc
 - Profile edit (name, phone, etc.)
 - Instructor profile view (Member can see Instructor info)
 
-### Lesson Date Range Validation (Phase 5)
-**Issue**: When updating Season dates, need to validate that all existing Lessons fall within the new date range
+### Lesson Instructor Management API (Post-MVP)
+**Feature**: Separate APIs for adding/removing instructors from a lesson
 
-**Current State (Phase 3)**:
-- Season update allows changing startDate/endDate without checking existing Lessons
-- This can cause Lessons to exist outside Season period
+**Current MVP Approach**:
+- Lesson creation includes instructor assignment
+- Lesson update replaces entire instructor list
 
-**Required Validation (Phase 5)**:
-```kotlin
-// In UpdateSeasonService or UpdateLessonService
-val hasLessonsOutsideRange = lessonRepository.existsBySeasonIdAndDateOutsideRange(
-    seasonId = season.id,
-    startDate = newStartDate,
-    endDate = newEndDate
-)
-if (hasLessonsOutsideRange) {
-    throw CannotUpdateSeasonDateWithExistingLessonsException()
-}
-```
+**Post-MVP APIs**:
+- POST /api/v1/.../lessons/{lessonUuid}/instructors - Add instructor to lesson
+- DELETE /api/v1/.../lessons/{lessonUuid}/instructors/{staffUuid} - Remove instructor from lesson
 
-**Alternative Approach**:
-- Allow date update but auto-cancel Lessons outside new range
-- Notify affected members
+**Benefits**:
+- Partial update without sending full lesson data
+- Clearer audit trail for instructor changes
+- Better UX for instructor management
 
-**Decision Required**: Discuss with product team during Phase 5 implementation
+**Constraints**:
+- Minimum 1 instructor must remain (cannot remove last instructor)
 
 ### Season Review System (Post-MVP)
 **Feature**: Members who participated in a season can write reviews after the season ends
@@ -301,23 +303,23 @@ CREATE TABLE season_review (
 - System monitoring dashboard
 - Role assignment to users
 
-### Group Leader Permission Settings
-- Group leader can configure permissions for regular instructors
+### Representative Permission Settings
+- Representative can configure permissions for center staff
 - Configurable permissions:
   - Season CRUD (create/update/delete)
   - Season enrollment approval/rejection
   - Ticket grant (default/additional)
-- MVP: All instructors have full permissions
-- Post-MVP: Group leader restricts specific permissions per instructor
+- MVP: All center staff have full permissions
+- Post-MVP: Representative restricts specific permissions per staff
 
-### Instructor Permission Scope (Post-MVP)
+### Staff Permission Scope (Post-MVP)
 - **Lesson Management**:
-  - MVP: All instructors in group can modify/cancel any lesson
-  - Post-MVP: Restrict to lesson creator or assigned instructors only
+  - MVP: All center staff can modify/cancel any lesson
+  - Post-MVP: Restrict to lesson creator or assigned staff only
 - **Enrollment Approval**:
-  - MVP: All instructors can approve/reject season enrollment
-  - Post-MVP: Restrict to season creator or group leader only
-- These settings will be configurable by group leader in future releases
+  - MVP: All center staff can approve/reject season enrollment
+  - Post-MVP: Restrict to season creator or representative only
+- These settings will be configurable by representative in future releases
 
 ### Search & Filter
 - Lesson search by date, instructor, riding center

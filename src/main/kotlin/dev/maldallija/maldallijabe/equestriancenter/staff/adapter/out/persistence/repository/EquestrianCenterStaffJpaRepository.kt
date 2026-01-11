@@ -28,4 +28,9 @@ interface EquestrianCenterStaffJpaRepository : JpaRepository<EquestrianCenterSta
         userId: Long,
         pageable: Pageable,
     ): Page<EquestrianCenterStaffEntity>
+
+    fun findByEquestrianCenterIdAndUuidInAndLeftAtIsNullAndDeletedAtIsNull(
+        equestrianCenterId: Long,
+        uuids: List<UUID>,
+    ): List<EquestrianCenterStaffEntity>
 }

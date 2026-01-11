@@ -9,6 +9,9 @@ import dev.maldallija.maldallijabe.equestriancenter.invitation.domain.exception.
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.EquestrianCenterStaffException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.StaffNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.domain.exception.UnauthorizedStaffOperationException
+import dev.maldallija.maldallijabe.lesson.domain.exception.LessonException
+import dev.maldallija.maldallijabe.lesson.domain.exception.LessonNotFoundException
+import dev.maldallija.maldallijabe.lesson.domain.exception.UnauthorizedLessonOperationException
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonException
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
 import dev.maldallija.maldallijabe.season.domain.exception.UnauthorizedSeasonOperationException
@@ -287,6 +290,42 @@ class GlobalExceptionHandler {
             ErrorResponse(
                 code = e.errorCode,
                 message = e.message ?: "Ticket log error",
+            )
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(LessonNotFoundException::class)
+    fun handleLessonNotFoundException(e: LessonNotFoundException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Lesson not found",
+            )
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(UnauthorizedLessonOperationException::class)
+    fun handleUnauthorizedLessonOperationException(e: UnauthorizedLessonOperationException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Forbidden",
+            )
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(errorResponse)
+    }
+
+    @ExceptionHandler(LessonException::class)
+    fun handleLessonException(e: LessonException): ResponseEntity<ErrorResponse> {
+        val errorResponse =
+            ErrorResponse(
+                code = e.errorCode,
+                message = e.message ?: "Lesson error",
             )
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

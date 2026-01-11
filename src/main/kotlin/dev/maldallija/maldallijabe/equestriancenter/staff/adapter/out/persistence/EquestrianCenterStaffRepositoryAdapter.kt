@@ -63,4 +63,14 @@ class EquestrianCenterStaffRepositoryAdapter(
         val savedEntity = equestrianCenterStaffJpaRepository.save(entity)
         return equestrianCenterStaffMapper.toDomain(savedEntity)
     }
+
+    override fun findActiveByEquestrianCenterIdAndUuidIn(
+        equestrianCenterId: Long,
+        uuids: List<UUID>,
+    ): List<EquestrianCenterStaff> =
+        equestrianCenterStaffJpaRepository
+            .findByEquestrianCenterIdAndUuidInAndLeftAtIsNullAndDeletedAtIsNull(
+                equestrianCenterId = equestrianCenterId,
+                uuids = uuids,
+            ).map { equestrianCenterStaffMapper.toDomain(it) }
 }

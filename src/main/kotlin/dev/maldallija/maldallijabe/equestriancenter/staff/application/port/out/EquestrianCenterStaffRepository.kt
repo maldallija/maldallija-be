@@ -29,4 +29,9 @@ interface EquestrianCenterStaffRepository {
     ): Page<EquestrianCenterStaff>
 
     fun save(equestrianCenterStaff: EquestrianCenterStaff): EquestrianCenterStaff
+
+    fun findActiveByEquestrianCenterIdAndUuidIn(
+        equestrianCenterId: Long,
+        uuids: List<UUID>,
+    ): List<EquestrianCenterStaff>
 }

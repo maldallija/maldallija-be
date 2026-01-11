@@ -454,6 +454,12 @@ dev.maldallija.maldallijabe
   - Validations: Season ACTIVE, lesson date within season period, capacity, time range
   - Authorization: Staff only for create/update/cancel
 
+- **Architecture Refactoring** (Phase 5.5) - Tech Debt resolved
+  - Season → Lesson domain dependency separation
+  - Created CheckScheduledLessonsExistOutsideDateRangeUseCase in Lesson domain
+  - UpdateSeasonService now depends on UseCase instead of LessonRepository
+  - Benefit: Clear domain boundary, easier MSA migration
+
 ### Not Implemented Yet
 - **Reservation + Attendance** (Phase 6)
   - Reservation - booking, cancellation, ticket account reference
@@ -476,7 +482,8 @@ dev.maldallija.maldallijabe
 8. ~~Implement SeasonEnrollment (apply, approve/reject, enrollment log)~~ COMPLETED (Phase 3 - 4/4 endpoints)
 9. ~~Implement SeasonTicketAccount & TicketLog APIs~~ COMPLETED (Phase 4)
 10. ~~Implement Lesson + LessonInstructor~~ COMPLETED (Phase 5)
-11. Implement Reservation + LessonAttendance (Phase 6)
+11. ~~Architecture Refactoring - Season/Lesson domain separation~~ COMPLETED (Phase 5.5)
+12. Implement Reservation + LessonAttendance (Phase 6)
 
 ## Development Log
 
@@ -559,8 +566,8 @@ dev.maldallija.maldallijabe
 - New exception: LessonsExistOutsideDateRangeException
 
 **Technical decisions:**
-- Season → Lesson dependency: Currently allowed (documented as tech debt for future refactoring)
-- Post-MVP: Consider separating into CheckLessonsExistOutsideDateRangeUseCase
+- Season → Lesson dependency: ~~Currently allowed (documented as tech debt for future refactoring)~~ Resolved in Phase 5.5
+- ~~Post-MVP: Consider separating into CheckLessonsExistOutsideDateRangeUseCase~~ Done
 
 **Files changed:**
 - SeasonException.kt: Added LessonsExistOutsideDateRangeException
@@ -568,3 +575,23 @@ dev.maldallija.maldallijabe
 - LessonJpaRepository.kt: Added JPQL query with SCHEDULED status filter
 - LessonRepositoryAdapter.kt: Implemented new method
 - UpdateSeasonService.kt: Added date change validation logic (step 7)
+
+
+### 2026-01-11: Architecture Refactoring (Phase 5.5) completed
+
+**Domain dependency separation:**
+- Resolved Season → Lesson domain boundary violation
+- Before: UpdateSeasonService directly referenced LessonRepository (output port)
+- After: UpdateSeasonService depends on CheckScheduledLessonsExistOutsideDateRangeUseCase (input port)
+
+**Files created:**
+- CheckScheduledLessonsExistOutsideDateRangeUseCase.kt (lesson/application/port/in)
+- CheckScheduledLessonsExistOutsideDateRangeService.kt (lesson/application/service)
+
+**Files modified:**
+- UpdateSeasonService.kt: LessonRepository → CheckScheduledLessonsExistOutsideDateRangeUseCase
+
+**Benefits:**
+- Clear domain boundary between Season and Lesson
+- Lesson domain encapsulates its own logic
+- Easier MSA migration (UseCase can become API call)

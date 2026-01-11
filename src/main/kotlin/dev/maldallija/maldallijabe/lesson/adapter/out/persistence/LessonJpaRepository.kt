@@ -7,6 +7,7 @@ import java.util.UUID
 
 interface LessonJpaRepository : JpaRepository<LessonEntity, Long> {
     fun findByUuidAndDeletedAtIsNull(uuid: UUID): LessonEntity?
+
     @Query(
         """
         SELECT l FROM LessonEntity l

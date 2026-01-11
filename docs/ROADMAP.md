@@ -170,10 +170,10 @@ This document defines role-based features, development phases, and future enhanc
     - Reject season date update if existing SCHEDULED lessons fall outside new range ✅
     - CANCELLED lessons excluded from validation ✅
 
-### Phase 5.5: Architecture Refactoring (Tech Debt)
-- **Season → Lesson Domain Separation**
-  - Current: UpdateSeasonService directly references LessonRepository
-  - Target: Create CheckScheduledLessonsExistOutsideDateRangeUseCase in Lesson domain
+### Phase 5.5: Architecture Refactoring (Tech Debt) - COMPLETED
+- **Season → Lesson Domain Separation** - COMPLETED
+  - ~~Current: UpdateSeasonService directly references LessonRepository~~ Resolved
+  - ~~Target: Create CheckScheduledLessonsExistOutsideDateRangeUseCase in Lesson domain~~ Done
   - Benefit: Clear domain boundary, easier MSA migration
 
 ### Phase 6: Reservation & Attendance

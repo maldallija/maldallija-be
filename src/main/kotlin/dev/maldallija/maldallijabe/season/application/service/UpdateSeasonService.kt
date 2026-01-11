@@ -3,7 +3,7 @@ package dev.maldallija.maldallijabe.season.application.service
 import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
-import dev.maldallija.maldallijabe.lesson.application.port.out.LessonRepository
+import dev.maldallija.maldallijabe.lesson.application.port.`in`.CheckScheduledLessonsExistOutsideDateRangeUseCase
 import dev.maldallija.maldallijabe.season.application.port.`in`.UpdateSeasonUseCase
 import dev.maldallija.maldallijabe.season.application.port.out.SeasonRepository
 import dev.maldallija.maldallijabe.season.domain.SeasonStatus
@@ -27,7 +27,7 @@ class UpdateSeasonService(
     private val equestrianCenterRepository: EquestrianCenterRepository,
     private val seasonRepository: SeasonRepository,
     private val equestrianCenterStaffRepository: EquestrianCenterStaffRepository,
-    private val lessonRepository: LessonRepository,
+    private val checkScheduledLessonsExistOutsideDateRangeUseCase: CheckScheduledLessonsExistOutsideDateRangeUseCase,
 ) : UpdateSeasonUseCase {
     override fun updateSeason(
         equestrianCenterUuid: UUID,
@@ -92,7 +92,7 @@ class UpdateSeasonService(
         val isDateChanged = season.startDate != startDate || season.endDate != endDate
         if (isDateChanged) {
             val scheduledLessonsExistOutsideRange =
-                lessonRepository.existsBySeasonIdAndScheduledLessonDateOutsideRange(
+                checkScheduledLessonsExistOutsideDateRangeUseCase.existsOutsideDateRange(
                     seasonId = season.id,
                     startDate = startDate,
                     endDate = endDate,

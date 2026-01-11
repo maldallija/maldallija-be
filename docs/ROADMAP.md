@@ -155,19 +155,26 @@ This document defines role-based features, development phases, and future enhanc
     - GET /api/v1/users/{userUuid}/seasons/{seasonUuid}/ticket-account (View ticket balance) ✅
     - GET /api/v1/users/{userUuid}/seasons/{seasonUuid}/ticket-logs (View ticket logs) ✅
 
-### Phase 5: Lesson
-12. **Lesson** - CRUD, status management, time validation (created_by = equestrian_center_staff.id)
-    - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 생성 + 강사 배정)
-    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 목록)
-    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 상세)
-    - PATCH /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 수정)
-    - PATCH .../lessons/{lessonUuid}/cancel (레슨 취소 + 예약자 환불)
-    - Validation: Season must be ACTIVE, lessonDate within season period
-13. **LessonInstructor** - Lesson-staff assignment (N:M, references equestrian_center_staff.id)
-    - MVP: Assigned during lesson create/update (full replacement)
+### Phase 5: Lesson ✅ COMPLETED
+12. **Lesson** - CRUD, status management, time validation (created_by = equestrian_center_staff.id) ✅
+    - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 생성 + 강사 배정) ✅
+    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 목록) ✅
+    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 상세) ✅
+    - PATCH /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 수정) ✅
+    - PATCH .../lessons/{lessonUuid}/cancel (레슨 취소 + 예약자 환불) ✅
+    - Validation: Season must be ACTIVE, lessonDate within season period ✅
+13. **LessonInstructor** - Lesson-staff assignment (N:M, references equestrian_center_staff.id) ✅
+    - MVP: Assigned during lesson create/update (full replacement) ✅
     - Post-MVP: Separate add/remove instructor APIs
-14. **UpdateSeasonService Enhancement** - Lesson date range validation
-    - Reject season date update if existing lessons fall outside new range
+14. **UpdateSeasonService Enhancement** - Lesson date range validation ✅
+    - Reject season date update if existing SCHEDULED lessons fall outside new range ✅
+    - CANCELLED lessons excluded from validation ✅
+
+### Phase 5.5: Architecture Refactoring (Tech Debt)
+- **Season → Lesson Domain Separation**
+  - Current: UpdateSeasonService directly references LessonRepository
+  - Target: Create CheckScheduledLessonsExistOutsideDateRangeUseCase in Lesson domain
+  - Benefit: Clear domain boundary, easier MSA migration
 
 ### Phase 6: Reservation & Attendance
 15. **Reservation** - Book/cancel, ticket deduction/refund (references season_ticket_account_id)

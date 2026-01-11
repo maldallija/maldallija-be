@@ -441,11 +441,20 @@ dev.maldallija.maldallijabe
   - Complete module independence (MSA-ready)
   - Dependency: app → user (unidirectional)
 
+- **Lesson + LessonInstructor** (Phase 5) - 5/5 endpoints
+  - Lesson CRUD (5 APIs):
+    - POST /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 생성)
+    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons (레슨 목록)
+    - GET /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 상세)
+    - PATCH /api/v1/equestrian-centers/{centerUuid}/seasons/{seasonUuid}/lessons/{lessonUuid} (레슨 수정)
+    - PATCH .../lessons/{lessonUuid}/cancel (레슨 취소)
+  - LessonInstructor: N:M relationship with EquestrianCenterStaff (assigned during create/update)
+  - UpdateSeasonService enhancement: SCHEDULED lesson date range validation on season date change
+  - 12 Exception classes (LessonException hierarchy)
+  - Validations: Season ACTIVE, lesson date within season period, capacity, time range
+  - Authorization: Staff only for create/update/cancel
+
 ### Not Implemented Yet
-- **Lesson + Assignment** (Phase 5)
-  - Lesson - CRUD, status, time validation
-  - LessonInstructor - instructor assignment (N:M with EquestrianCenterStaff)
-  - UpdateSeasonService - Lesson date range validation
 - **Reservation + Attendance** (Phase 6)
   - Reservation - booking, cancellation, ticket account reference
   - LessonAttendance - attendance tracking with checker info
@@ -466,7 +475,7 @@ dev.maldallija.maldallijabe
 7. ~~Season CRUD~~ COMPLETED (Phase 3 - API #1-5)
 8. ~~Implement SeasonEnrollment (apply, approve/reject, enrollment log)~~ COMPLETED (Phase 3 - 4/4 endpoints)
 9. ~~Implement SeasonTicketAccount & TicketLog APIs~~ COMPLETED (Phase 4)
-10. Implement Lesson + LessonInstructor (Phase 5)
+10. ~~Implement Lesson + LessonInstructor~~ COMPLETED (Phase 5)
 11. Implement Reservation + LessonAttendance (Phase 6)
 
 ## Development Log
@@ -529,3 +538,33 @@ dev.maldallija.maldallijabe
 - CLAUDE.md Project Structure: Added Modular Monolith section
 - CLAUDE.md Development Log: Added this entry (2026-01-06)
 - Phase 1 (user module separation) completed, Phase 2 (auth module) ready to start
+
+
+### 2026-01-11: Lesson + LessonInstructor (Phase 5) completed
+
+**Lesson CRUD implementation:**
+- 5 API endpoints implemented:
+  - POST /seasons/{seasonUuid}/lessons (create with instructor assignment)
+  - GET /seasons/{seasonUuid}/lessons (list with date/status filtering)
+  - GET /seasons/{seasonUuid}/lessons/{lessonUuid} (detail)
+  - PATCH /seasons/{seasonUuid}/lessons/{lessonUuid} (update)
+  - PATCH /seasons/{seasonUuid}/lessons/{lessonUuid}/cancel (cancel)
+- LessonInstructor: N:M relationship, full replacement on update (MVP)
+- 12 Exception classes in LessonException hierarchy
+
+**UpdateSeasonService enhancement:**
+- Added SCHEDULED lesson date range validation
+- When season startDate/endDate changes, validates no SCHEDULED lessons exist outside new range
+- CANCELLED lessons excluded from validation (already completed, no impact)
+- New exception: LessonsExistOutsideDateRangeException
+
+**Technical decisions:**
+- Season → Lesson dependency: Currently allowed (documented as tech debt for future refactoring)
+- Post-MVP: Consider separating into CheckLessonsExistOutsideDateRangeUseCase
+
+**Files changed:**
+- SeasonException.kt: Added LessonsExistOutsideDateRangeException
+- LessonRepository.kt: Added existsBySeasonIdAndScheduledLessonDateOutsideRange
+- LessonJpaRepository.kt: Added JPQL query with SCHEDULED status filter
+- LessonRepositoryAdapter.kt: Implemented new method
+- UpdateSeasonService.kt: Added date change validation logic (step 7)

@@ -5,6 +5,7 @@ import dev.maldallija.maldallijabe.lesson.domain.Lesson
 import dev.maldallija.maldallijabe.lesson.domain.LessonStatus
 import org.springframework.stereotype.Repository
 import java.time.LocalDate
+import java.util.UUID
 
 @Repository
 class LessonRepositoryAdapter(
@@ -16,6 +17,11 @@ class LessonRepositoryAdapter(
         val savedEntity = lessonJpaRepository.save(entity)
         return lessonMapper.toDomain(savedEntity)
     }
+
+    override fun findByUuid(uuid: UUID): Lesson? =
+        lessonJpaRepository
+            .findByUuidAndDeletedAtIsNull(uuid)
+            ?.let { lessonMapper.toDomain(it) }
 
     override fun findBySeasonIdAndFilters(
         seasonId: Long,

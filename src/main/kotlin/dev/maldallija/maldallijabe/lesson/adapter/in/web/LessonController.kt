@@ -5,6 +5,7 @@ import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.CreateLessonReque
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.InstructorResponse
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.LessonListResponse
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.CreateLessonUseCase
+import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonDetailUseCase
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonsUseCase
 import dev.maldallija.maldallijabe.lesson.domain.LessonStatus
 import io.swagger.v3.oas.annotations.Operation
@@ -31,6 +32,7 @@ import java.util.UUID
 class LessonController(
     private val createLessonUseCase: CreateLessonUseCase,
     private val getLessonsUseCase: GetLessonsUseCase,
+    private val getLessonDetailUseCase: GetLessonDetailUseCase,
 ) {
     @Operation(summary = "레슨 생성")
     @ApiResponses(
@@ -131,6 +133,57 @@ class LessonController(
                         },
                 )
             }
+
+        return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "레슨 상세 조회")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장, 시즌 또는 레슨을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @GetMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/lessons/{lessonUuid}")
+    fun getLessonDetail(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @PathVariable lessonUuid: UUID,
+    ): ResponseEntity<LessonListResponse> {
+        val lesson =
+            getLessonDetailUseCase.getLessonDetail(
+                equestrianCenterUuid = equestrianCenterUuid,
+                seasonUuid = seasonUuid,
+                lessonUuid = lessonUuid,
+            )
+
+        val response =
+            LessonListResponse(
+                uuid = lesson.uuid,
+                title = lesson.title,
+                description = lesson.description,
+                lessonDate = lesson.lessonDate,
+                startTime = lesson.startTime,
+                endTime = lesson.endTime,
+                capacity = lesson.capacity,
+                currentCount = lesson.currentCount,
+                ridingCenter = lesson.ridingCenter,
+                status = lesson.status,
+                instructors =
+                    lesson.instructors.map { instructor ->
+                        InstructorResponse(
+                            staffUuid = instructor.staffUuid,
+                            name = instructor.name,
+                        )
+                    },
+            )
 
         return ResponseEntity.ok(response)
     }

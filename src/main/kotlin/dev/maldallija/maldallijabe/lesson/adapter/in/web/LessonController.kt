@@ -5,6 +5,7 @@ import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.CreateLessonReque
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.InstructorResponse
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.LessonListResponse
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.UpdateLessonRequest
+import dev.maldallija.maldallijabe.lesson.application.port.`in`.CancelLessonUseCase
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.CreateLessonUseCase
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonDetailUseCase
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonsUseCase
@@ -37,6 +38,7 @@ class LessonController(
     private val getLessonsUseCase: GetLessonsUseCase,
     private val getLessonDetailUseCase: GetLessonDetailUseCase,
     private val updateLessonUseCase: UpdateLessonUseCase,
+    private val cancelLessonUseCase: CancelLessonUseCase,
 ) {
     @Operation(summary = "레슨 생성")
     @ApiResponses(
@@ -237,6 +239,47 @@ class LessonController(
             capacity = request.capacity,
             ridingCenter = request.ridingCenter,
             instructorStaffUuids = request.instructorStaffUuids,
+        )
+
+        return ResponseEntity.ok().build()
+    }
+
+    @Operation(summary = "레슨 취소")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "취소 성공",
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "레슨이 SCHEDULED 상태가 아님",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "해당 승마장의 직원만 레슨 취소 가능",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장, 시즌 또는 레슨을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PatchMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/lessons/{lessonUuid}/cancel")
+    fun cancelLesson(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @PathVariable lessonUuid: UUID,
+        @AuthenticationPrincipal requestingUserId: Long,
+    ): ResponseEntity<Void> {
+        cancelLessonUseCase.cancelLesson(
+            equestrianCenterUuid = equestrianCenterUuid,
+            seasonUuid = seasonUuid,
+            lessonUuid = lessonUuid,
+            requestingUserId = requestingUserId,
         )
 
         return ResponseEntity.ok().build()

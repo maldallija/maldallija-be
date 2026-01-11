@@ -73,4 +73,9 @@ class EquestrianCenterStaffRepositoryAdapter(
                 equestrianCenterId = equestrianCenterId,
                 uuids = uuids,
             ).map { equestrianCenterStaffMapper.toDomain(it) }
+
+    override fun findAllByIdIn(ids: List<Long>): List<EquestrianCenterStaff> =
+        equestrianCenterStaffJpaRepository
+            .findByIdInAndDeletedAtIsNull(ids)
+            .map { equestrianCenterStaffMapper.toDomain(it) }
 }

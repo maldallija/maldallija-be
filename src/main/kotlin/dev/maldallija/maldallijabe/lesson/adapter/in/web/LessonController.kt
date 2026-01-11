@@ -2,7 +2,11 @@ package dev.maldallija.maldallijabe.lesson.adapter.`in`.web
 
 import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.CreateLessonRequest
+import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.InstructorResponse
+import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.LessonListResponse
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.CreateLessonUseCase
+import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonsUseCase
+import dev.maldallija.maldallijabe.lesson.domain.LessonStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -11,11 +15,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 import java.util.UUID
 
 @Tag(name = "Lesson", description = "레슨 관리 API")
@@ -23,6 +30,7 @@ import java.util.UUID
 @RequestMapping("/api/v1/equestrian-centers")
 class LessonController(
     private val createLessonUseCase: CreateLessonUseCase,
+    private val getLessonsUseCase: GetLessonsUseCase,
 ) {
     @Operation(summary = "레슨 생성")
     @ApiResponses(
@@ -70,5 +78,60 @@ class LessonController(
         )
 
         return ResponseEntity.status(201).build()
+    }
+
+    @Operation(summary = "레슨 목록 조회")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "조회 성공",
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장 또는 시즌을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @GetMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/lessons")
+    fun getLessons(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @RequestParam(required = false) lessonDate: LocalDate?,
+        @RequestParam(required = false) lessonStatus: LessonStatus?,
+    ): ResponseEntity<List<LessonListResponse>> {
+        val lessons =
+            getLessonsUseCase.getLessons(
+                equestrianCenterUuid = equestrianCenterUuid,
+                seasonUuid = seasonUuid,
+                lessonDate = lessonDate,
+                lessonStatus = lessonStatus,
+            )
+
+        val response =
+            lessons.map { lesson ->
+                LessonListResponse(
+                    uuid = lesson.uuid,
+                    title = lesson.title,
+                    description = lesson.description,
+                    lessonDate = lesson.lessonDate,
+                    startTime = lesson.startTime,
+                    endTime = lesson.endTime,
+                    capacity = lesson.capacity,
+                    currentCount = lesson.currentCount,
+                    ridingCenter = lesson.ridingCenter,
+                    status = lesson.status,
+                    instructors =
+                        lesson.instructors.map { instructor ->
+                            InstructorResponse(
+                                staffUuid = instructor.staffUuid,
+                                name = instructor.name,
+                            )
+                        },
+                )
+            }
+
+        return ResponseEntity.ok(response)
     }
 }

@@ -14,4 +14,9 @@ class LessonInstructorRepositoryAdapter(
         val savedEntities = lessonInstructorJpaRepository.saveAll(entities)
         return savedEntities.map { lessonInstructorMapper.toDomain(it) }
     }
+
+    override fun findByLessonIdIn(lessonIds: List<Long>): List<LessonInstructor> =
+        lessonInstructorJpaRepository
+            .findByLessonIdIn(lessonIds)
+            .map { lessonInstructorMapper.toDomain(it) }
 }

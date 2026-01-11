@@ -2,7 +2,9 @@ package dev.maldallija.maldallijabe.lesson.adapter.out.persistence
 
 import dev.maldallija.maldallijabe.lesson.application.port.out.LessonRepository
 import dev.maldallija.maldallijabe.lesson.domain.Lesson
+import dev.maldallija.maldallijabe.lesson.domain.LessonStatus
 import org.springframework.stereotype.Repository
+import java.time.LocalDate
 
 @Repository
 class LessonRepositoryAdapter(
@@ -14,4 +16,16 @@ class LessonRepositoryAdapter(
         val savedEntity = lessonJpaRepository.save(entity)
         return lessonMapper.toDomain(savedEntity)
     }
+
+    override fun findBySeasonIdAndFilters(
+        seasonId: Long,
+        lessonDate: LocalDate?,
+        lessonStatus: LessonStatus?,
+    ): List<Lesson> =
+        lessonJpaRepository
+            .findBySeasonIdAndFilters(
+                seasonId = seasonId,
+                lessonDate = lessonDate,
+                lessonStatus = lessonStatus?.name,
+            ).map { lessonMapper.toDomain(it) }
 }

@@ -34,4 +34,6 @@ interface EquestrianCenterStaffRepository {
         equestrianCenterId: Long,
         uuids: List<UUID>,
     ): List<EquestrianCenterStaff>
+
+    fun findAllByIdIn(ids: List<Long>): List<EquestrianCenterStaff>
 }

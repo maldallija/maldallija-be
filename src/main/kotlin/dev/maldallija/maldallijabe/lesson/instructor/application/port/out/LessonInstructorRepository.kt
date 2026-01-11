@@ -4,4 +4,6 @@ import dev.maldallija.maldallijabe.lesson.instructor.domain.LessonInstructor
 
 interface LessonInstructorRepository {
     fun saveAll(lessonInstructors: List<LessonInstructor>): List<LessonInstructor>
+
+    fun findByLessonIdIn(lessonIds: List<Long>): List<LessonInstructor>
 }

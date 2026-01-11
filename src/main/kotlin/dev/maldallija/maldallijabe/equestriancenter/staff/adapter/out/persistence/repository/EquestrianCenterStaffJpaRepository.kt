@@ -33,4 +33,6 @@ interface EquestrianCenterStaffJpaRepository : JpaRepository<EquestrianCenterSta
         equestrianCenterId: Long,
         uuids: List<UUID>,
     ): List<EquestrianCenterStaffEntity>
+
+    fun findByIdInAndDeletedAtIsNull(ids: List<Long>): List<EquestrianCenterStaffEntity>
 }

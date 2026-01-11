@@ -3,6 +3,7 @@ package dev.maldallija.maldallijabe.season.application.service
 import dev.maldallija.maldallijabe.equestriancenter.center.application.port.out.EquestrianCenterRepository
 import dev.maldallija.maldallijabe.equestriancenter.center.domain.exception.EquestrianCenterNotFoundException
 import dev.maldallija.maldallijabe.equestriancenter.staff.application.port.out.EquestrianCenterStaffRepository
+import dev.maldallija.maldallijabe.lesson.application.port.out.LessonRepository
 import dev.maldallija.maldallijabe.season.application.port.`in`.UpdateSeasonUseCase
 import dev.maldallija.maldallijabe.season.application.port.out.SeasonRepository
 import dev.maldallija.maldallijabe.season.domain.SeasonStatus
@@ -11,6 +12,7 @@ import dev.maldallija.maldallijabe.season.domain.exception.InvalidDefaultTicketC
 import dev.maldallija.maldallijabe.season.domain.exception.InvalidSeasonCapacityException
 import dev.maldallija.maldallijabe.season.domain.exception.InvalidSeasonDateRangeException
 import dev.maldallija.maldallijabe.season.domain.exception.InvalidSeasonTitleException
+import dev.maldallija.maldallijabe.season.domain.exception.LessonsExistOutsideDateRangeException
 import dev.maldallija.maldallijabe.season.domain.exception.SeasonNotFoundException
 import dev.maldallija.maldallijabe.season.domain.exception.UnauthorizedSeasonOperationException
 import org.springframework.stereotype.Service
@@ -25,6 +27,7 @@ class UpdateSeasonService(
     private val equestrianCenterRepository: EquestrianCenterRepository,
     private val seasonRepository: SeasonRepository,
     private val equestrianCenterStaffRepository: EquestrianCenterStaffRepository,
+    private val lessonRepository: LessonRepository,
 ) : UpdateSeasonUseCase {
     override fun updateSeason(
         equestrianCenterUuid: UUID,
@@ -84,7 +87,22 @@ class UpdateSeasonService(
             throw InvalidDefaultTicketCountException()
         }
 
-        // 7. 시즌 수정
+        // 7. 날짜 변경 시 기존 SCHEDULED 레슨이 새 범위 밖에 있는지 검증
+        // NOTE: CANCELLED 레슨은 이미 취소되어 예약/환불 완료된 상태이므로 검증에서 제외
+        val isDateChanged = season.startDate != startDate || season.endDate != endDate
+        if (isDateChanged) {
+            val scheduledLessonsExistOutsideRange =
+                lessonRepository.existsBySeasonIdAndScheduledLessonDateOutsideRange(
+                    seasonId = season.id,
+                    startDate = startDate,
+                    endDate = endDate,
+                )
+            if (scheduledLessonsExistOutsideRange) {
+                throw LessonsExistOutsideDateRangeException()
+            }
+        }
+
+        // 8. 시즌 수정
         // NOTE: defaultTicketCount 변경 시 기존 승인된 회원에게는 영향 없음
         // - 이미 부여된 티켓은 SeasonTicketAccount에 저장되어 있음
         // - 변경된 defaultTicketCount는 신규 승인 시에만 적용됨

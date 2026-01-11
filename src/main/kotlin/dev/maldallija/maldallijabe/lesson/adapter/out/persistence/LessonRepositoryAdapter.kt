@@ -34,4 +34,15 @@ class LessonRepositoryAdapter(
                 lessonDate = lessonDate,
                 lessonStatus = lessonStatus?.name,
             ).map { lessonMapper.toDomain(it) }
+
+    override fun existsBySeasonIdAndScheduledLessonDateOutsideRange(
+        seasonId: Long,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Boolean =
+        lessonJpaRepository.existsBySeasonIdAndScheduledLessonDateOutsideRange(
+            seasonId = seasonId,
+            startDate = startDate,
+            endDate = endDate,
+        )
 }

@@ -22,4 +22,20 @@ interface LessonJpaRepository : JpaRepository<LessonEntity, Long> {
         lessonDate: LocalDate?,
         lessonStatus: String?,
     ): List<LessonEntity>
+
+    @Query(
+        """
+        SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END
+        FROM LessonEntity l
+        WHERE l.seasonId = :seasonId
+          AND l.deletedAt IS NULL
+          AND l.status = 'SCHEDULED'
+          AND (l.lessonDate < :startDate OR l.lessonDate > :endDate)
+        """,
+    )
+    fun existsBySeasonIdAndScheduledLessonDateOutsideRange(
+        seasonId: Long,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Boolean
 }

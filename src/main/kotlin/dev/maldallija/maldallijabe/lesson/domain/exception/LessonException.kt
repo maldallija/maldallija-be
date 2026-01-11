@@ -70,7 +70,7 @@ class DuplicateInstructorException :
 class LessonNotScheduledException :
     LessonException(
         errorCode = "LESSON_NOT_SCHEDULED",
-        message = "예정된 레슨만 수정할 수 있습니다.",
+        message = "예정된 레슨만 수정/취소할 수 있습니다.",
     )
 
 class CapacityLessThanCurrentCountException :

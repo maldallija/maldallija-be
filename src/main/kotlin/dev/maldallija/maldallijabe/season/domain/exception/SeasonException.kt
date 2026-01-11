@@ -61,3 +61,9 @@ class CannotCloseInactiveSeasonException :
         errorCode = "CANNOT_CLOSE_INACTIVE_SEASON",
         message = "활성화된 시즌만 종료할 수 있습니다.",
     )
+
+class LessonsExistOutsideDateRangeException :
+    SeasonException(
+        errorCode = "LESSONS_EXIST_OUTSIDE_DATE_RANGE",
+        message = "새로운 시즌 기간 밖에 존재하는 레슨이 있어 날짜를 변경할 수 없습니다.",
+    )

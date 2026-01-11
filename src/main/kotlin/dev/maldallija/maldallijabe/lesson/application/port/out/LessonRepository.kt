@@ -15,4 +15,10 @@ interface LessonRepository {
         lessonDate: LocalDate?,
         lessonStatus: LessonStatus?,
     ): List<Lesson>
+
+    fun existsBySeasonIdAndScheduledLessonDateOutsideRange(
+        seasonId: Long,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Boolean
 }

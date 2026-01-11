@@ -19,4 +19,8 @@ class LessonInstructorRepositoryAdapter(
         lessonInstructorJpaRepository
             .findByLessonIdIn(lessonIds)
             .map { lessonInstructorMapper.toDomain(it) }
+
+    override fun deleteByLessonId(lessonId: Long) {
+        lessonInstructorJpaRepository.deleteByLessonId(lessonId)
+    }
 }

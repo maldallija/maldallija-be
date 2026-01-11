@@ -6,4 +6,6 @@ interface LessonInstructorRepository {
     fun saveAll(lessonInstructors: List<LessonInstructor>): List<LessonInstructor>
 
     fun findByLessonIdIn(lessonIds: List<Long>): List<LessonInstructor>
+
+    fun deleteByLessonId(lessonId: Long)
 }

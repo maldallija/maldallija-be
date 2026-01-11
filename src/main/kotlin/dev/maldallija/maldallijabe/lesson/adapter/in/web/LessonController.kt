@@ -4,9 +4,11 @@ import dev.maldallija.maldallijabe.common.adapter.`in`.web.ErrorResponse
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.CreateLessonRequest
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.InstructorResponse
 import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.LessonListResponse
+import dev.maldallija.maldallijabe.lesson.adapter.`in`.web.dto.UpdateLessonRequest
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.CreateLessonUseCase
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonDetailUseCase
 import dev.maldallija.maldallijabe.lesson.application.port.`in`.GetLessonsUseCase
+import dev.maldallija.maldallijabe.lesson.application.port.`in`.UpdateLessonUseCase
 import dev.maldallija.maldallijabe.lesson.domain.LessonStatus
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -17,6 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -33,6 +36,7 @@ class LessonController(
     private val createLessonUseCase: CreateLessonUseCase,
     private val getLessonsUseCase: GetLessonsUseCase,
     private val getLessonDetailUseCase: GetLessonDetailUseCase,
+    private val updateLessonUseCase: UpdateLessonUseCase,
 ) {
     @Operation(summary = "레슨 생성")
     @ApiResponses(
@@ -186,5 +190,55 @@ class LessonController(
             )
 
         return ResponseEntity.ok(response)
+    }
+
+    @Operation(summary = "레슨 수정")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "수정 성공",
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "잘못된 요청 (시간, 정원, 강사 등)",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "403",
+                description = "해당 승마장의 직원만 레슨 수정 가능",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+            ApiResponse(
+                responseCode = "404",
+                description = "승마장, 시즌 또는 레슨을 찾을 수 없음",
+                content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+            ),
+        ],
+    )
+    @PatchMapping("/{equestrianCenterUuid}/seasons/{seasonUuid}/lessons/{lessonUuid}")
+    fun updateLesson(
+        @PathVariable equestrianCenterUuid: UUID,
+        @PathVariable seasonUuid: UUID,
+        @PathVariable lessonUuid: UUID,
+        @AuthenticationPrincipal requestingUserId: Long,
+        @RequestBody request: UpdateLessonRequest,
+    ): ResponseEntity<Void> {
+        updateLessonUseCase.updateLesson(
+            equestrianCenterUuid = equestrianCenterUuid,
+            seasonUuid = seasonUuid,
+            lessonUuid = lessonUuid,
+            requestingUserId = requestingUserId,
+            title = request.title,
+            description = request.description,
+            lessonDate = request.lessonDate,
+            startTime = request.startTime,
+            endTime = request.endTime,
+            capacity = request.capacity,
+            ridingCenter = request.ridingCenter,
+            instructorStaffUuids = request.instructorStaffUuids,
+        )
+
+        return ResponseEntity.ok().build()
     }
 }
